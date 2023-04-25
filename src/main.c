@@ -189,7 +189,7 @@ int main(void) {
         }
 
         for (int index = 0; index < 100; index++) {
-            for (int delay = 0; delay < 25000; delay++) {
+            for (int delay = 0; delay < 5000; delay++) {
                 __asm("NOP");
             }
         }
