@@ -34,19 +34,35 @@ SPDX-License-Identifier: MIT
 #ifndef OUTPUT_INSTANCES
     #define OUTPUT_INSTANCES 4
 #endif
+
+#ifndef INPUT_INSTANCES
+    #define INPUT_INSTANCES 4
+#endif
  
 /* === Private data type declarations ========================================================== */
 
+// Estructura para almacenar el descriptor de una entrada digital
+struct digital_input_s{
+    uint8_t pin;        //Puerto GPIO de la entrada digital
+    uint8_t port;       //Terminal del puerto GPIO de la entrada digital
+    bool inverted;      //La entrada opera con logica invertida
+    bool last_state;    //Estado anterior de la entrada digital
+    bool allocated;     //Bandera para indicar que el descriptor esta en uso
+};
+
+// Esctructura para almacenar el descriptor de una salida digital
 struct digital_output_s{
-    uint8_t pin;
-    uint8_t port;
-    bool allocated;
+    uint8_t pin;        //Puerto GPIO de la salida digital
+    uint8_t port;       //Terminal del uerto GPIO de la salida digital
+    bool allocated;     //Bandera para indicar que el descriptor esta en uso
 };
 
 
 /* === Private variable declarations =========================================================== */
 
 /* === Private function declarations =========================================================== */
+
+digital_input_t DigitalInputAllocated(void);
 
 digital_output_t DigitalOutputAllocated(void);
 
@@ -55,6 +71,22 @@ digital_output_t DigitalOutputAllocated(void);
 /* === Private variable definitions ============================================================ */
 
 /* === Private function implementation ========================================================= */
+
+// Funcion para asignar un descriptor para crea una nueva entrada digital
+digital_input_t DigitalInputAllocated(void){
+    digital_input_t input = NULL; 
+
+    static struct digital_input_s instances[INPUT_INSTANCES] = {0};
+
+    for (int index = 0; index < INPUT_INSTANCES; index++){
+        if(!instances[index].allocated){
+            instances[index].allocated = true;
+            input = &instances[index];
+            break;
+        }
+    }
+    return input;
+}
 
 // Funcion para asignar un descriptor para crea una nueva salida digital
 digital_output_t DigitalOutputAllocated(void){
@@ -73,6 +105,58 @@ digital_output_t DigitalOutputAllocated(void){
 }
 
 /* === Public function implementation ========================================================== */
+
+digital_input_t DigitalInputCreate(uint8_t port, uint8_t pin, bool logic){
+    digital_input_t input = DigitalInputAllocated();
+
+    if(input){
+        input->port = port;
+        input->pin = pin;
+        input->inverted = logic;
+        Chip_GPIO_SetPinDIR(LPC_GPIO_PORT, input->port, input->pin, false);
+    }
+    return input;
+}
+
+bool DigitalInputGetState(digital_input_t input){
+    if(DigitalInputHasActivated(input)){
+        return true;
+    }
+    if(DigitalInputHasDeactivated(input)){
+        return false;
+    }
+}
+
+bool DigitalInputHasChange(digital_input_t input){
+    bool current_state = DigitalInputGetState(input);
+    if ((current_state) && (!(input->last_state))) {
+        return true;
+    }else {
+        return false; 
+    }
+    input->last_state = current_state;
+
+}
+
+bool DigitalInputHasActivated(digital_input_t input){
+    bool current_state = DigitalInputGetState(input);
+    if (current_state == true && input->last_state == false) {
+        return true;
+    }else {
+        return false; 
+    }
+    input->last_state = current_state;
+}
+
+bool DigitalInputHasDeactivated(digital_input_t input){
+    bool current_state = DigitalInputGetState(input);
+    if (current_state == false && input->last_state == true) {
+        return true;
+    }else {
+        return false; 
+    }
+    input->last_state = current_state;
+}
 
 digital_output_t DigitalOutputCreate(uint8_t port, uint8_t pin){
     digital_output_t output = DigitalOutputAllocated();
