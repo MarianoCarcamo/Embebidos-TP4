@@ -18,9 +18,9 @@ SPDX-License-Identifier: MIT
 #ifndef DIGITAL_H
 #define DIGITAL_H
 
-/** \brief Brief description of the file
+/** \brief Generacion de la clase digital
  **
- ** Full file description
+ ** Genera la clase digital que permite determinar entradas y salidas digitales
  **
  ** \addtogroup name Module denomination
  ** \brief Brief description of the module
@@ -29,6 +29,7 @@ SPDX-License-Identifier: MIT
 /* === Headers files inclusions ================================================================ */
 
 #include <stdint.h>
+#include <stdbool.h>
 
 /* === Cabecera C++ ============================================================================ */
 
