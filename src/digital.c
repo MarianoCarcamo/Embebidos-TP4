@@ -119,43 +119,38 @@ digital_input_t DigitalInputCreate(uint8_t port, uint8_t pin, bool logic){
 }
 
 bool DigitalInputGetState(digital_input_t input){
-    if(DigitalInputHasActivated(input)){
-        return true;
-    }
-    if(DigitalInputHasDeactivated(input)){
-        return false;
+    if(input->inverted){
+        return Chip_GPIO_ReadPortBit(LPC_GPIO_PORT,input->port,input->pin) == 0;
+    }else {
+        return Chip_GPIO_ReadPortBit(LPC_GPIO_PORT,input->port,input->pin) != 0;
     }
 }
 
 bool DigitalInputHasChange(digital_input_t input){
     bool current_state = DigitalInputGetState(input);
-    if ((current_state) && (!(input->last_state))) {
-        return true;
-    }else {
-        return false; 
-    }
-    input->last_state = current_state;
+    bool has_changed = false;
 
+    if (current_state == !(input->last_state)) has_changed = true;
+    input->last_state = current_state;
+    return has_changed;
 }
 
 bool DigitalInputHasActivated(digital_input_t input){
     bool current_state = DigitalInputGetState(input);
-    if (current_state == true && input->last_state == false) {
-        return true;
-    }else {
-        return false; 
-    }
+    bool has_activated = false;
+
+    if (current_state == true && input->last_state == false) has_activated = true;
     input->last_state = current_state;
+    return has_activated;
 }
 
 bool DigitalInputHasDeactivated(digital_input_t input){
     bool current_state = DigitalInputGetState(input);
-    if (current_state == false && input->last_state == true) {
-        return true;
-    }else {
-        return false; 
-    }
+    bool has_deactivated = false;
+
+    if (current_state == false && input->last_state == true) has_deactivated = true;
     input->last_state = current_state;
+    return has_deactivated;
 }
 
 digital_output_t DigitalOutputCreate(uint8_t port, uint8_t pin){

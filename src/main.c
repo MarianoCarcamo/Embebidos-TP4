@@ -179,7 +179,7 @@ int main(void) {
         }
 
         if (DigitalInputHasActivated(tec_2)) {
-            DigitalOutputToggle(led_amarillo);
+            DigitalOutputToggle(led_rojo);
         }
 
         if (DigitalInputGetState(tec_3) == true) {
@@ -190,13 +190,13 @@ int main(void) {
         }
 
         divisor++;
-        if (divisor == 25) {
+        if (divisor == 5) {
             divisor = 0;
             DigitalOutputToggle(led_verde);
         }
 
         for (int index = 0; index < 100; index++) {
-            for (int delay = 0; delay < 5000; delay++) {
+            for (int delay = 0; delay < 25000; delay++) {
                 __asm("NOP");
             }
         }
