@@ -40,15 +40,14 @@ extern "C" {
 /* === Public data type declarations =========================================================== */
 
 typedef struct board_s {
-    digital_input_t tec_1;
-    digital_input_t tec_2;
-    digital_input_t tec_3;
-    digital_input_t tec_4;
+    digital_input_t set_time;
+    digital_input_t set_alarm;
+    digital_input_t decrement;
+    digital_input_t increment;
+    digital_input_t accept;
+    digital_input_t cancel;
 
-    digital_output_t led_rgb_azul;
-    digital_output_t led_rojo;
-    digital_output_t led_amarillo;
-    digital_output_t led_verde;
+    digital_output_t buzzer;
 } const * const board_t;
 
 /* === Public variable declarations ============================================================ */
