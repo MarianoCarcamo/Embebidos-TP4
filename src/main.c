@@ -63,32 +63,19 @@
 
 int main(void) {
 
-    int divisor = 0;
-
     board_t board = BoardCreate();
     
     while (true) {
-        if (DigitalInputGetState(board->tec_1) == true) {
-            DigitalOutputActivate(board->led_rgb_azul);
+        if (DigitalInputGetState(board->set_time)   |
+            DigitalInputGetState(board->set_alarm)  |
+            DigitalInputGetState(board->decrement)  |
+            DigitalInputGetState(board->increment)  |
+            DigitalInputGetState(board->cancel)     |
+            DigitalInputGetState(board->accept)     ) {
+
+            DigitalOutputActivate(board->buzzer);
         } else {
-            DigitalOutputDeactivate(board->led_rgb_azul);
-        }
-
-        if (DigitalInputHasActivated(board->tec_2)) {
-            DigitalOutputToggle(board->led_rojo);
-        }
-
-        if (DigitalInputGetState(board->tec_3) == true) {
-            DigitalOutputActivate(board->led_amarillo);
-        }
-        if (DigitalInputGetState(board->tec_4) == true) {
-            DigitalOutputDeactivate(board->led_amarillo);
-        }
-
-        divisor++;
-        if (divisor == 25) {
-            divisor = 0;
-            DigitalOutputToggle(board->led_verde);
+            DigitalOutputDeactivate(board->buzzer);
         }
 
         for (int index = 0; index < 100; index++) {
