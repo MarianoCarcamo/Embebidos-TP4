@@ -15,8 +15,8 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 SPDX-License-Identifier: MIT
 *************************************************************************************************/
 
-#ifndef EDU-CIAA_H
-#define EDU-CIAA_H
+#ifndef CIAA_H
+#define CIAA_H
 
 /** \brief EDU-CIAA board hardware abstraction declarations
  **
@@ -110,4 +110,4 @@ extern "C" {
 
 /** @} End of module definition for doxygen */
 
-#endif /* EDU-CIAA_H */
+#endif /* CIAA_H */
