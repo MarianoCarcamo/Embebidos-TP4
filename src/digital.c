@@ -32,31 +32,30 @@ SPDX-License-Identifier: MIT
 /* === Macros definitions ====================================================================== */
 
 #ifndef OUTPUT_INSTANCES
-    #define OUTPUT_INSTANCES 4
+#define OUTPUT_INSTANCES 4
 #endif
 
 #ifndef INPUT_INSTANCES
-    #define INPUT_INSTANCES 4
+#define INPUT_INSTANCES 4
 #endif
- 
+
 /* === Private data type declarations ========================================================== */
 
 // Estructura para almacenar el descriptor de una entrada digital
-struct digital_input_s{
-    uint8_t pin;        //Puerto GPIO de la entrada digital
-    uint8_t port;       //Terminal del puerto GPIO de la entrada digital
-    bool inverted;      //La entrada opera con logica invertida
-    bool last_state;    //Estado anterior de la entrada digital
-    bool allocated;     //Bandera para indicar que el descriptor esta en uso
+struct digital_input_s {
+    uint8_t pin;     // Puerto GPIO de la entrada digital
+    uint8_t port;    // Terminal del puerto GPIO de la entrada digital
+    bool inverted;   // La entrada opera con logica invertida
+    bool last_state; // Estado anterior de la entrada digital
+    bool allocated;  // Bandera para indicar que el descriptor esta en uso
 };
 
 // Esctructura para almacenar el descriptor de una salida digital
-struct digital_output_s{
-    uint8_t pin;        //Puerto GPIO de la salida digital
-    uint8_t port;       //Terminal del uerto GPIO de la salida digital
-    bool allocated;     //Bandera para indicar que el descriptor esta en uso
+struct digital_output_s {
+    uint8_t pin;    // Puerto GPIO de la salida digital
+    uint8_t port;   // Terminal del uerto GPIO de la salida digital
+    bool allocated; // Bandera para indicar que el descriptor esta en uso
 };
-
 
 /* === Private variable declarations =========================================================== */
 
@@ -73,13 +72,13 @@ digital_output_t DigitalOutputAllocated(void);
 /* === Private function implementation ========================================================= */
 
 // Funcion para asignar un descriptor para crea una nueva entrada digital
-digital_input_t DigitalInputAllocated(void){
-    digital_input_t input = NULL; 
+digital_input_t DigitalInputAllocated(void) {
+    digital_input_t input = NULL;
 
     static struct digital_input_s instances[INPUT_INSTANCES] = {0};
 
-    for (int index = 0; index < INPUT_INSTANCES; index++){
-        if(!instances[index].allocated){
+    for (int index = 0; index < INPUT_INSTANCES; index++) {
+        if (!instances[index].allocated) {
             instances[index].allocated = true;
             input = &instances[index];
             break;
@@ -89,13 +88,13 @@ digital_input_t DigitalInputAllocated(void){
 }
 
 // Funcion para asignar un descriptor para crea una nueva salida digital
-digital_output_t DigitalOutputAllocated(void){
-    digital_output_t output = NULL; 
+digital_output_t DigitalOutputAllocated(void) {
+    digital_output_t output = NULL;
 
     static struct digital_output_s instances[OUTPUT_INSTANCES] = {0};
 
-    for (int index = 0; index < OUTPUT_INSTANCES; index++){
-        if(!instances[index].allocated){
+    for (int index = 0; index < OUTPUT_INSTANCES; index++) {
+        if (!instances[index].allocated) {
             instances[index].allocated = true;
             output = &instances[index];
             break;
@@ -106,10 +105,10 @@ digital_output_t DigitalOutputAllocated(void){
 
 /* === Public function implementation ========================================================== */
 
-digital_input_t DigitalInputCreate(uint8_t port, uint8_t pin, bool logic){
+digital_input_t DigitalInputCreate(uint8_t port, uint8_t pin, bool logic) {
     digital_input_t input = DigitalInputAllocated();
 
-    if(input){
+    if (input) {
         input->port = port;
         input->pin = pin;
         input->inverted = logic;
@@ -118,45 +117,48 @@ digital_input_t DigitalInputCreate(uint8_t port, uint8_t pin, bool logic){
     return input;
 }
 
-bool DigitalInputGetState(digital_input_t input){
-    if(input->inverted){
-        return Chip_GPIO_ReadPortBit(LPC_GPIO_PORT,input->port,input->pin) == 0;
-    }else {
-        return Chip_GPIO_ReadPortBit(LPC_GPIO_PORT,input->port,input->pin) != 0;
+bool DigitalInputGetState(digital_input_t input) {
+    if (input->inverted) {
+        return Chip_GPIO_ReadPortBit(LPC_GPIO_PORT, input->port, input->pin) == 0;
+    } else {
+        return Chip_GPIO_ReadPortBit(LPC_GPIO_PORT, input->port, input->pin) != 0;
     }
 }
 
-bool DigitalInputHasChange(digital_input_t input){
+bool DigitalInputHasChange(digital_input_t input) {
     bool current_state = DigitalInputGetState(input);
     bool has_changed = false;
 
-    if (current_state == !(input->last_state)) has_changed = true;
+    if (current_state == !(input->last_state))
+        has_changed = true;
     input->last_state = current_state;
     return has_changed;
 }
 
-bool DigitalInputHasActivated(digital_input_t input){
+bool DigitalInputHasActivated(digital_input_t input) {
     bool current_state = DigitalInputGetState(input);
     bool has_activated = false;
 
-    if (current_state == true && input->last_state == false) has_activated = true;
+    if (current_state == true && input->last_state == false)
+        has_activated = true;
     input->last_state = current_state;
     return has_activated;
 }
 
-bool DigitalInputHasDeactivated(digital_input_t input){
+bool DigitalInputHasDeactivated(digital_input_t input) {
     bool current_state = DigitalInputGetState(input);
     bool has_deactivated = false;
 
-    if (current_state == false && input->last_state == true) has_deactivated = true;
+    if (current_state == false && input->last_state == true)
+        has_deactivated = true;
     input->last_state = current_state;
     return has_deactivated;
 }
 
-digital_output_t DigitalOutputCreate(uint8_t port, uint8_t pin){
+digital_output_t DigitalOutputCreate(uint8_t port, uint8_t pin) {
     digital_output_t output = DigitalOutputAllocated();
 
-    if(output){
+    if (output) {
         output->port = port;
         output->pin = pin;
         Chip_GPIO_SetPinState(LPC_GPIO_PORT, output->port, output->pin, false);
@@ -165,16 +167,16 @@ digital_output_t DigitalOutputCreate(uint8_t port, uint8_t pin){
     return output;
 }
 
-void DigitalOutputActivate(digital_output_t output){
+void DigitalOutputActivate(digital_output_t output) {
     Chip_GPIO_SetPinState(LPC_GPIO_PORT, output->port, output->pin, true);
 }
 
-void DigitalOutputDeactivate(digital_output_t output){
+void DigitalOutputDeactivate(digital_output_t output) {
     Chip_GPIO_SetPinState(LPC_GPIO_PORT, output->port, output->pin, false);
 }
 
-void DigitalOutputToggle(digital_output_t output){
-    Chip_GPIO_SetPinToggle(LPC_GPIO_PORT, output->port , output->pin);
+void DigitalOutputToggle(digital_output_t output) {
+    Chip_GPIO_SetPinToggle(LPC_GPIO_PORT, output->port, output->pin);
 }
 
 /* === End of documentation ==================================================================== */

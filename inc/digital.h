@@ -41,10 +41,10 @@ extern "C" {
 
 /* === Public data type declarations =========================================================== */
 
-//! Referencia a un descriptor para gestionar una salida digital 
+//! Referencia a un descriptor para gestionar una salida digital
 typedef struct digital_output_s * digital_output_t;
 
-//! Referencia a un descriptor para gestionar una entrada digital 
+//! Referencia a un descriptor para gestionar una entrada digital
 typedef struct digital_input_s * digital_input_t;
 
 /* === Public variable declarations ============================================================ */
@@ -53,7 +53,7 @@ typedef struct digital_input_s * digital_input_t;
 
 /**
  * @brief Metodo para crear una entrada digital
- * 
+ *
  * @param port Puerto GPIO que contiene a la entrada
  * @param pin Numero de terminal del puerto GPIO asignado a la entrada
  * @param logic "false" para indicar activo en alto / "true" para indicar activo en bajo
@@ -64,8 +64,8 @@ digital_input_t DigitalInputCreate(uint8_t port, uint8_t pin, bool logic);
 
 /**
  * @brief Metodo para leer el estado de la entrada
- * 
- * @param input Puntero al descriptor de la salida 
+ *
+ * @param input Puntero al descriptor de la salida
  * @return true La entrada se encuentra activada
  * @return false La entrada se encuentra desactivada
  */
@@ -74,39 +74,39 @@ bool DigitalInputGetState(digital_input_t input);
 
 /**
  * @brief Metodo para detectar un cambio en la entrada
- * 
+ *
  * @param input Puntero al descriptor de la entrada
  * @return true La entrada tuvo un cambio desde el ultimo llamado
- * @return false La entrada no tuvo cambio desde el ultimo llamado 
+ * @return false La entrada no tuvo cambio desde el ultimo llamado
  */
 
 bool DigitalInputHasChange(digital_input_t input);
 
 /**
- * @brief Metodo para detectar el estado activo de la entrada 
- * 
+ * @brief Metodo para detectar el estado activo de la entrada
+ *
  * @param input Puntero al descriptor de la entrada
  * @return true La entrada tuvo una activacion desde el ultimo llamado
- * @return false La entrada no tuvo una activacion desde el ultimo llamado 
+ * @return false La entrada no tuvo una activacion desde el ultimo llamado
  */
 
 bool DigitalInputHasActivated(digital_input_t input);
 
 /**
- * @brief Metodo para detectar el estado inactivo de la entrada 
- * 
+ * @brief Metodo para detectar el estado inactivo de la entrada
+ *
  * @param input Puntero al descriptor de la entrada
  * @return true La entrada tuvo una desactivacion desde el ultimo llamado
- * @return false La entrada no tuvo una desactivacion desde el ultimo llamado 
+ * @return false La entrada no tuvo una desactivacion desde el ultimo llamado
  */
 
 bool DigitalInputHasDeactivated(digital_input_t input);
 
 /**
  * @brief Metodo para crear una salida digital
- * 
+ *
  * @param port Puerto GPIO que contiene a la salida
- * @param pin Numero de terminal del puerto GPIO asignado a la salida 
+ * @param pin Numero de terminal del puerto GPIO asignado a la salida
  * @return digital_output_t Puntero al descriptor de la salida creada
  */
 
@@ -114,23 +114,23 @@ digital_output_t DigitalOutputCreate(uint8_t port, uint8_t pin);
 
 /**
  * @brief Metodo para prender una salida digital
- * 
- * @param output Puntero al descriptor de la salida 
+ *
+ * @param output Puntero al descriptor de la salida
  */
 
 void DigitalOutputActivate(digital_output_t output);
 
 /**
  * @brief Metodo para apagar una salida digital
- * 
+ *
  * @param output Puntero al descriptor de la salida
  */
 
 void DigitalOutputDeactivate(digital_output_t output);
 
 /**
- * @brief Metodo para invertir el estado de una salida digital 
- * 
+ * @brief Metodo para invertir el estado de una salida digital
+ *
  * @param output Puntero al descriptor de la salida
  */
 

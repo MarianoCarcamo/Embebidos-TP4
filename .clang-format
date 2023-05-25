@@ -3,10 +3,20 @@ UseTab: Never
 IndentWidth: 4
 TabWidth: 4
 BreakBeforeBraces: Attach
-AllowShortIfStatementsOnASingleLine: false
-AllowShortFunctionsOnASingleLine: false
-IndentCaseLabels: false
-ColumnLimit: 120
+ColumnLimit: 100
 AccessModifierOffset: -4
+
+# Alineado de definiciones
+AlignConsecutiveMacros: true
+
+# Alineado de blockes
+AllowShortBlocksOnASingleLine: false
+AllowShortFunctionsOnASingleLine: false
+AllowShortIfStatementsOnASingleLine: false
+AllowShortLambdasOnASingleLine: false
+
+# Extras
 FixNamespaceComments: false
+IndentCaseLabels: false
 PointerAlignment: Middle
+SortIncludes: false

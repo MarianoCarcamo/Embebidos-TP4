@@ -1,5 +1,5 @@
-/* Copyright 2022, Laboratorio de Microprocesadores 
- * Facultad de Ciencias Exactas y Tecnología 
+/* Copyright 2022, Laboratorio de Microprocesadores
+ * Facultad de Ciencias Exactas y Tecnología
  * Universidad Nacional de Tucuman
  * http://www.microprocesadores.unt.edu.ar/
  * Copyright 2022, Esteban Volentini <evolentini@herrera.unt.edu.ar>
@@ -51,9 +51,9 @@ extern "C" {
 #endif
 
 /* === Public macros definitions =============================================================== */
- 
+
 // Definiciones de los recursos asociados a los DIGITs de la pantalla
-#define DIGITS_GPIO   0
+#define DIGITS_GPIO 0
 
 #define DIGIT_1_PORT 0
 #define DIGIT_1_PIN  0
@@ -137,8 +137,9 @@ extern "C" {
 #define SEGMENT_G_BIT  6
 #define SEGMENT_G_MASK (1 << SEGMENT_G_BIT)
 
-#define SEGMENTS_MASK (SEGMENT_A_MASK | SEGMENT_B_MASK | SEGMENT_C_MASK | \
-        SEGMENT_D_MASK | SEGMENT_E_MASK | SEGMENT_F_MASK | SEGMENT_G_MASK )
+#define SEGMENTS_MASK                                                                              \
+    (SEGMENT_A_MASK | SEGMENT_B_MASK | SEGMENT_C_MASK | SEGMENT_D_MASK | SEGMENT_E_MASK |          \
+     SEGMENT_F_MASK | SEGMENT_G_MASK)
 
 #define SEGMENT_P_PORT 6
 #define SEGMENT_P_PIN  8
@@ -185,13 +186,13 @@ extern "C" {
 
 // Definiciones de los recursos asociados al zumbador
 #define BUZZER_PORT 2
-#define BUZZER_PIN 2
+#define BUZZER_PIN  2
 #define BUZZER_FUNC SCU_MODE_FUNC4
 #define BUZZER_GPIO 5
-#define BUZZER_BIT 2
+#define BUZZER_BIT  2
 
 /* === Public data type declarations =========================================================== */
- 
+
 /* === Public variable declarations ============================================================ */
 
 /* === Public function declarations ============================================================ */
@@ -204,4 +205,4 @@ extern "C" {
 
 /** @} End of module definition for doxygen */
 
-#endif   /* PONCHO_H */
+#endif /* PONCHO_H */

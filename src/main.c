@@ -46,7 +46,6 @@
 
 /* === Macros definitions ====================================================================== */
 
-
 /* === Private data type declarations ========================================================== */
 
 /* === Private variable declarations =========================================================== */
@@ -64,14 +63,11 @@
 int main(void) {
 
     board_t board = BoardCreate();
-    
+
     while (true) {
-        if (DigitalInputGetState(board->set_time)   |
-            DigitalInputGetState(board->set_alarm)  |
-            DigitalInputGetState(board->decrement)  |
-            DigitalInputGetState(board->increment)  |
-            DigitalInputGetState(board->cancel)     |
-            DigitalInputGetState(board->accept)     ) {
+        if (DigitalInputGetState(board->set_time) | DigitalInputGetState(board->set_alarm) |
+            DigitalInputGetState(board->decrement) | DigitalInputGetState(board->increment) |
+            DigitalInputGetState(board->cancel) | DigitalInputGetState(board->accept)) {
 
             DigitalOutputActivate(board->buzzer);
         } else {
