@@ -41,11 +41,10 @@
 /* === Headers files inclusions =============================================================== */
 
 #include "bsp.h"
-#include <stdbool.h>
 #include "digital.h"
+#include <stdbool.h>
 
 /* === Macros definitions ====================================================================== */
-
 
 /* === Private data type declarations ========================================================== */
 
@@ -66,7 +65,7 @@ int main(void) {
     int divisor = 0;
 
     board_t board = BoardCreate();
-    
+
     while (true) {
         if (DigitalInputGetState(board->tec_1) == true) {
             DigitalOutputActivate(board->led_rgb_azul);
