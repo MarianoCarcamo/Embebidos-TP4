@@ -42,7 +42,7 @@
 
 #include "bsp.h"
 #include <stdbool.h>
-#include "digital.h"
+#include <stddef.h>
 
 /* === Macros definitions ====================================================================== */
 
@@ -65,14 +65,15 @@ int main(void) {
     board_t board = BoardCreate();
 
     while (true) {
-        if (DigitalInputGetState(board->set_time) | DigitalInputGetState(board->set_alarm) |
-            DigitalInputGetState(board->decrement) | DigitalInputGetState(board->increment) |
-            DigitalInputGetState(board->cancel) | DigitalInputGetState(board->accept)) {
-
-            DigitalOutputActivate(board->buzzer);
-        } else {
-            DigitalOutputDeactivate(board->buzzer);
+        if (DigitalInputHasActivated(board->accept)) {
+            DisplayWriteBCD(board->display, (uint8_t[]){1, 2, 3, 4}, 4);
         }
+
+        if (DigitalInputHasActivated(board->cancel)) {
+            DisplayWriteBCD(board->display, NULL, 0);
+        }
+
+        DisplayRefresh(board->display);
 
         for (int index = 0; index < 100; index++) {
             for (int delay = 0; delay < 5000; delay++) {
