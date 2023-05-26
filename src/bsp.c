@@ -66,7 +66,7 @@ void SegmentsTurnOn(uint8_t segments);
 /**
  * @brief Funcion para encender un digito de la pantalla multiplexada
  *
- * @remark Los digitos estan numerados de derecha a izquierda comenzando por cero
+ * @remark Los digitos estan numerados de izquierda a derecha comenzando por cero
  *
  * @param digit Numero de digito a encender
  */
