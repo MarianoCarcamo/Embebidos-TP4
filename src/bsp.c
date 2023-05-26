@@ -74,7 +74,7 @@ void DigitTurnOn(uint8_t digit);
 
 /* === Private function implementation ========================================================= */
 
-void DigisInit(void) {
+void DigitsInit(void) {
     Chip_SCU_PinMuxSet(DIGIT_1_PORT, DIGIT_1_PIN,
                        SCU_MODE_INBUFF_EN | SCU_MODE_INACT | DIGIT_1_FUNC);
     Chip_GPIO_SetPinState(LPC_GPIO_PORT, DIGIT_1_GPIO, DIGIT_1_BIT, false);

@@ -65,11 +65,11 @@ int main(void) {
     board_t board = BoardCreate();
 
     while (true) {
-        if (DigitalInputHasActivated(board->accept)) {
+        if (DigitalInputHasActivated(board->increment)) {
             DisplayWriteBCD(board->display, (uint8_t[]){1, 2, 3, 4}, 4);
         }
 
-        if (DigitalInputHasActivated(board->cancel)) {
+        if (DigitalInputHasActivated(board->decrement)) {
             DisplayWriteBCD(board->display, NULL, 0);
         }
 
