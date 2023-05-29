@@ -33,7 +33,9 @@
  */
 
 /** \brief Simple sample of use LPC HAL gpio functions
- **
+ ** Los botones de accept, increment y decrement imprimen en la pantalla 1 2 3 4
+ ** Los botones de set_alarm, set_time y cancel borran la pantalla
+ ** Este programa sirve para verificar el funcionamiento completo del Hardware
  ** \addtogroup samples Sample projects
  ** \brief Sample projects to use as a starting point
  ** @{ */
@@ -65,18 +67,20 @@ int main(void) {
     board_t board = BoardCreate();
 
     while (true) {
-        if (DigitalInputHasActivated(board->accept)) {
+        if (DigitalInputHasActivated(board->accept) | DigitalInputHasActivated(board->increment) |
+            DigitalInputHasActivated(board->decrement)) {
             DisplayWriteBCD(board->display, (uint8_t[]){1, 2, 3, 4}, 4);
         }
 
-        if (DigitalInputHasActivated(board->cancel)) {
+        if (DigitalInputHasActivated(board->cancel) | DigitalInputHasActivated(board->set_alarm) |
+            DigitalInputHasActivated(board->set_time)) {
             DisplayWriteBCD(board->display, NULL, 0);
         }
 
         DisplayRefresh(board->display);
 
         for (int index = 0; index < 100; index++) {
-            for (int delay = 0; delay < 5000; delay++) {
+            for (int delay = 0; delay < 50; delay++) {
                 __asm("NOP");
             }
         }
