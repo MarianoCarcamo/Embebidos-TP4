@@ -36,7 +36,7 @@ SPDX-License-Identifier: MIT
 #endif
 
 #ifndef INPUT_INSTANCES
-#define INPUT_INSTANCES 4
+#define INPUT_INSTANCES 6
 #endif
 
 /* === Private data type declarations ========================================================== */
