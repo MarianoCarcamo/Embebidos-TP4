@@ -49,6 +49,9 @@
 
 /* === Macros definitions ====================================================================== */
 
+#define TICS_POR_SEC 600
+#define FREC_PARPADEO 600
+
 /* === Private data type declarations ========================================================== */
 
 /* === Private variable declarations =========================================================== */
@@ -78,10 +81,18 @@ int main(void) {
     reloj = ClockCreate(10, DisparoAlarma);
     board = BoardCreate();
 
-    SisTick_Init(600);
+    SisTick_Init(TICS_POR_SEC);
 
     while (true) {
+        if (DigitalInputHasActivated(board->accept) | DigitalInputHasActivated(board->increment) |
+            DigitalInputHasActivated(board->decrement)) {
+            DisplayBlinkDigits(board->display,2,3,FREC_PARPADEO);
+        }
 
+        if (DigitalInputHasActivated(board->cancel) | DigitalInputHasActivated(board->set_alarm) |
+            DigitalInputHasActivated(board->set_time)) {
+            DisplayBlinkDigits(board->display,0,0,0);
+        }
         ClockGetTime(reloj, hora, sizeof(hora));
         __asm volatile("cpsid i");
         DisplayWriteBCD(board->display, hora, sizeof(hora));
