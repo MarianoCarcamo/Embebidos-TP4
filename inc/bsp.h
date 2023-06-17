@@ -59,6 +59,8 @@ typedef struct board_s {
 
 board_t BoardCreate(void);
 
+void SisTick_Init(uint16_t ticks);
+
 /* === End of documentation ==================================================================== */
 
 #ifdef __cplusplus
