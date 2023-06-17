@@ -105,11 +105,11 @@ display_t DisplayCreate(uint8_t digits, display_driver_t driver) {
 }
 
 void DisplayWriteBCD(display_t display, uint8_t * number, uint8_t size) {
-    CleanDisplayMemory(display);
     for (int index = 0; index < size; index++) {
         if (index >= display->digits)
             break;
-        display->memory[index] = IMAGES[number[index]];
+        display->memory[index] &= SEGMENT_P;
+        display->memory[index] |= IMAGES[number[index]];
     }
 }
 
@@ -143,6 +143,11 @@ void DisplayBlinkDigits(display_t display, uint8_t from, uint8_t to, uint16_t fr
     display->blink_to = to;
     display->blink_frequency = frequency;
 }
+
+void DisplayToggleDot(display_t display, uint8_t digit) {
+    display->memory[digit] ^= SEGMENT_P;
+}
+
 /* === End of documentation ==================================================================== */
 
 /** @} End of module definition for doxygen */

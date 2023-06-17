@@ -33,9 +33,7 @@
  */
 
 /** \brief Simple sample of use LPC HAL gpio functions
- ** Los botones de accept, increment y decrement imprimen en la pantalla 1 2 3 4
- ** Los botones de set_alarm, set_time y cancel borran la pantalla
- ** Este programa sirve para verificar el funcionamiento completo del Hardware
+ **
  ** \addtogroup samples Sample projects
  ** \brief Sample projects to use as a starting point
  ** @{ */
@@ -49,7 +47,7 @@
 
 /* === Macros definitions ====================================================================== */
 
-#define TICS_POR_SEC 600
+#define TICS_POR_SEC  600
 #define FREC_PARPADEO 600
 
 /* === Private data type declarations ========================================================== */
@@ -84,14 +82,11 @@ int main(void) {
     SisTick_Init(TICS_POR_SEC);
 
     while (true) {
-        if (DigitalInputHasActivated(board->accept) | DigitalInputHasActivated(board->increment) |
-            DigitalInputHasActivated(board->decrement)) {
-            DisplayBlinkDigits(board->display,2,3,FREC_PARPADEO);
+        if (DigitalInputHasActivated(board->accept)) {
+            DisplayToggleDot(board->display, 0);
         }
 
-        if (DigitalInputHasActivated(board->cancel) | DigitalInputHasActivated(board->set_alarm) |
-            DigitalInputHasActivated(board->set_time)) {
-            DisplayBlinkDigits(board->display,0,0,0);
+        if (DigitalInputHasActivated(board->cancel)) {
         }
         ClockGetTime(reloj, hora, sizeof(hora));
         __asm volatile("cpsid i");

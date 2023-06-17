@@ -106,6 +106,14 @@ void DisplayRefresh(display_t display);
  */
 void DisplayBlinkDigits(display_t display, uint8_t from, uint8_t to, uint16_t frequency);
 
+/**
+ * @brief Funcion para prender y apagar los puntos
+ *
+ * @param display Puntero a la pantalla
+ * @param digit Punto del digito a alternar
+ */
+void DisplayToggleDot(display_t display, uint8_t digit);
+
 /* === End of documentation ==================================================================== */
 
 #ifdef __cplusplus
