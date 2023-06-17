@@ -37,6 +37,10 @@ SPDX-License-Identifier: MIT
 struct display_s {
     uint8_t digits;
     uint8_t active_digit;
+    uint8_t blink_from;
+    uint8_t blink_to;
+    uint8_t blink_frequency;
+    uint16_t blink_count;
     uint8_t memory[DISPLAY_MAX_DIGITS];
     struct display_driver_s driver[1];
 };
@@ -88,6 +92,10 @@ display_t DisplayCreate(uint8_t digits, display_driver_t driver) {
     if (display) {
         display->digits = digits;
         display->active_digit = digits - 1;
+        display->blink_from = 0;
+        display->blink_to = 0;
+        display->blink_frequency = 0;
+        display->blink_count = 0;
         memcpy(display->driver, driver, sizeof(display->driver)); // Asignacion de driver
         CleanDisplayMemory(display);
         display->driver->ScreenTurnOff();
@@ -106,12 +114,35 @@ void DisplayWriteBCD(display_t display, uint8_t * number, uint8_t size) {
 }
 
 void DisplayRefresh(display_t display) {
+
+    uint8_t segments;
+
     display->driver->ScreenTurnOff();
     display->active_digit = (display->active_digit + 1) % display->digits;
-    display->driver->SegmentsTurnOn(display->memory[display->active_digit]);
+
+    segments = display->memory[display->active_digit];
+    if (display->blink_frequency) {
+        if (display->active_digit == 0) {
+            display->blink_count = (display->blink_count + 1) % display->blink_frequency;
+        }
+        if (display->active_digit >= display->blink_from &&
+            display->active_digit <= display->blink_to) {
+            if (display->blink_count > (display->blink_frequency / 2)) {
+                segments = 0;
+            }
+        }
+    }
+
+    display->driver->SegmentsTurnOn(segments);
     display->driver->DigitTurnOn(display->active_digit);
 }
 
+void DisplayBlinkDigits(display_t display, uint8_t from, uint8_t to, uint16_t frequency) {
+    display->blink_count = 0;
+    display->blink_from = from;
+    display->blink_to = to;
+    display->blink_frequency = frequency;
+}
 /* === End of documentation ==================================================================== */
 
 /** @} End of module definition for doxygen */

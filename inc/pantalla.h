@@ -96,6 +96,16 @@ void DisplayWriteBCD(display_t display, uint8_t * number, uint8_t size);
  */
 void DisplayRefresh(display_t display);
 
+/**
+ * @brief Funcion para parpadear digitos
+ *
+ * @param display Puntero a la pantalla
+ * @param from Desde que digito parpadear
+ * @param to Hasta que digito parpadear
+ * @param frequency Frecuencia de parpadeo en tics por segundo
+ */
+void DisplayBlinkDigits(display_t display, uint8_t from, uint8_t to, uint16_t frequency);
+
 /* === End of documentation ==================================================================== */
 
 #ifdef __cplusplus
