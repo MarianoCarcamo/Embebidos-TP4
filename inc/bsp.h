@@ -51,7 +51,7 @@ typedef struct board_s {
     display_t display;
 
     digital_output_t buzzer;
-} const * const board_t;
+} const * board_t;
 
 /* === Public variable declarations ============================================================ */
 

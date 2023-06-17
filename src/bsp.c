@@ -230,7 +230,7 @@ void SisTick_Init(uint16_t ticks) {
 
     NVIC_SetPriority(SysTick_IRQn, (1 << __NVIC_PRIO_BITS) - 1);
 
-    __asm volatile("cpsie s");
+    __asm volatile("cpsie i");
 }
 
 /* === End of documentation ==================================================================== */

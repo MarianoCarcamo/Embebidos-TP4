@@ -55,24 +55,43 @@
 
 /* === Private function declarations =========================================================== */
 
+void DisparoAlarma(clock_t reloj);
+
 /* === Public variable definitions ============================================================= */
 
 /* === Private variable definitions ============================================================ */
 
+static board_t board;
+
+static clock_t reloj;
+
 /* === Private function implementation ========================================================= */
+
+void DisparoAlarma(clock_t reloj) {
+}
 
 /* === Public function implementation ========================================================= */
 
 int main(void) {
+    uint8_t hora[6];
 
-    board_t board = BoardCreate();
-    SisTick_Init();
+    reloj = ClockCreate(10, DisparoAlarma);
+    board = BoardCreate();
+
+    SisTick_Init(600);
+
     while (true) {
+
+        ClockGetTime(reloj, hora, sizeof(hora));
+        __asm volatile("cpsid i");
+        DisplayWriteBCD(board->display, hora, sizeof(hora));
+        __asm volatile("cpsie i");
     }
 }
 
 void SysTick_Handler(void) {
     DisplayRefresh(board->display);
+    ClockTic(reloj);
 }
 
 /* === End of documentation ==================================================================== */
