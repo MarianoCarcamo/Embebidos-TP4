@@ -119,7 +119,7 @@ bool ClockSetTime(clock_t reloj, const uint8_t * hora, int size) {
     return reloj->valida;
 }
 
-void ClockTic(clock_t reloj) {
+int ClockTic(clock_t reloj) {
     reloj->tics++;
     if (reloj->tics == reloj->tics_per_sec) { // Incremento en la unidad de segundos
         reloj->hora_actual[UNI_SEC]++;
@@ -151,6 +151,7 @@ void ClockTic(clock_t reloj) {
         reloj->hora_actual[DEC_HORA] = 0;
     }
     VerificarAlarma(reloj); // Verifico si debe sonar la alarma
+    return reloj->tics;
 }
 
 bool ClockGetAlarm(clock_t reloj, uint8_t * hora, int size) {

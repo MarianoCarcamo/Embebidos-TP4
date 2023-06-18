@@ -70,8 +70,9 @@ clock_t ClockCreate(int tics_por_segundo, funcion_disparo funcion);
  * llamada desde una rutina de interrupcion del tipo tic, como ser la provista por SysTic.
  *
  * @param reloj Descriptor del reloj.
+ * @return int Tic actual
  */
-void ClockTic(clock_t reloj);
+int ClockTic(clock_t reloj);
 
 /**
  * @brief Metodo para obtener la hora actual.
