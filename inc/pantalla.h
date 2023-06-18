@@ -102,9 +102,9 @@ void DisplayRefresh(display_t display);
  * @param display Puntero a la pantalla
  * @param from Desde que digito parpadear
  * @param to Hasta que digito parpadear
- * @param frequency Frecuencia de parpadeo en tics por segundo
+ * @param period Periodo de parpadeo en tics por segundo
  */
-void DisplayBlinkDigits(display_t display, uint8_t from, uint8_t to, uint16_t frequency);
+void DisplayBlinkDigits(display_t display, uint8_t from, uint8_t to, uint16_t period);
 
 /**
  * @brief Funcion para prender y apagar los puntos

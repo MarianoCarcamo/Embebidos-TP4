@@ -39,7 +39,7 @@ struct display_s {
     uint8_t active_digit;
     uint8_t blink_from;
     uint8_t blink_to;
-    uint8_t blink_frequency;
+    uint8_t blink_period;
     uint16_t blink_count;
     uint8_t memory[DISPLAY_MAX_DIGITS];
     struct display_driver_s driver[1];
@@ -94,7 +94,7 @@ display_t DisplayCreate(uint8_t digits, display_driver_t driver) {
         display->active_digit = digits - 1;
         display->blink_from = 0;
         display->blink_to = 0;
-        display->blink_frequency = 0;
+        display->blink_period = 0;
         display->blink_count = 0;
         memcpy(display->driver, driver, sizeof(display->driver)); // Asignacion de driver
         CleanDisplayMemory(display);
@@ -121,13 +121,13 @@ void DisplayRefresh(display_t display) {
     display->active_digit = (display->active_digit + 1) % display->digits;
 
     segments = display->memory[display->active_digit];
-    if (display->blink_frequency) {
+    if (display->blink_period) {
         if (display->active_digit == 0) {
-            display->blink_count = (display->blink_count + 1) % display->blink_frequency;
+            display->blink_count = (display->blink_count + 1) % display->blink_period;
         }
         if (display->active_digit >= display->blink_from &&
             display->active_digit <= display->blink_to) {
-            if (display->blink_count > (display->blink_frequency / 2)) {
+            if (display->blink_count > (display->blink_period / 2)) {
                 segments = 0;
             }
         }
@@ -137,11 +137,11 @@ void DisplayRefresh(display_t display) {
     display->driver->DigitTurnOn(display->active_digit);
 }
 
-void DisplayBlinkDigits(display_t display, uint8_t from, uint8_t to, uint16_t frequency) {
+void DisplayBlinkDigits(display_t display, uint8_t from, uint8_t to, uint16_t period) {
     display->blink_count = 0;
     display->blink_from = from;
     display->blink_to = to;
-    display->blink_frequency = frequency;
+    display->blink_period = period;
 }
 
 void DisplayToggleDot(display_t display, uint8_t digit) {
