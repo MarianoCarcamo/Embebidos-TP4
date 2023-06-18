@@ -76,7 +76,7 @@ void DisparoAlarma(clock_t reloj) {
 int main(void) {
     uint8_t hora[6];
 
-    reloj = ClockCreate(10, DisparoAlarma);
+    reloj = ClockCreate(TICS_POR_SEC, DisparoAlarma);
     board = BoardCreate();
 
     SisTick_Init(TICS_POR_SEC);
@@ -96,8 +96,14 @@ int main(void) {
 }
 
 void SysTick_Handler(void) {
+    static const int half_sec = TICS_POR_SEC / 2;
+    int current_value;
+
     DisplayRefresh(board->display);
-    ClockTic(reloj);
+    current_value = ClockTic(reloj);
+
+    if (current_value == half_sec || current_value == 0)
+        DisplayToggleDot(board->display, 1);
 }
 
 /* === End of documentation ==================================================================== */
