@@ -73,6 +73,10 @@ void IncrementarBCD(uint8_t numero[2], const uint8_t limite[2]);
 
 void DecrementarBCD(uint8_t numero[2], const uint8_t limite[2]);
 
+void EncenderPunto(int posicion);
+
+void ApagarPunto(int posicion);
+
 /* === Public variable definitions =============================================================
  */
 
@@ -99,31 +103,36 @@ void CambiarModo(modo_t valor) {
     switch (modo) {
     case SIN_CONFIGURAR:
         DisplayBlinkDigits(board->display, 0, 3, PERIODO_PARPADEO);
-        if (!DisplayToggleDot(board->display, 1))
-            DisplayToggleDot(board->display, 1);
+        EncenderPunto(1);
         break;
     case MOSTRANDO_HORA:
         DisplayBlinkDigits(board->display, 0, 3, 0);
+        ApagarPunto(0);
+        ApagarPunto(1);
+        ApagarPunto(2);
+        ApagarPunto(3);
         break;
     case AJUSTANDO_MINUTOS:
         DisplayBlinkDigits(board->display, 2, 3, PERIODO_PARPADEO);
+        EncenderPunto(1);
         break;
     case AJUSTANDO_HORA:
         DisplayBlinkDigits(board->display, 0, 1, PERIODO_PARPADEO);
+        EncenderPunto(1);
         break;
     case AJUSTANDO_MINUTOS_ALARMA:
         DisplayBlinkDigits(board->display, 2, 3, PERIODO_PARPADEO);
-        DisplayToggleDot(board->display, 0);
-        DisplayToggleDot(board->display, 1);
-        DisplayToggleDot(board->display, 2);
-        DisplayToggleDot(board->display, 3);
+        EncenderPunto(0);
+        EncenderPunto(1);
+        EncenderPunto(2);
+        EncenderPunto(3);
         break;
     case AJUSTANDO_HORA_ALARMA:
         DisplayBlinkDigits(board->display, 0, 1, PERIODO_PARPADEO);
-        DisplayToggleDot(board->display, 0);
-        DisplayToggleDot(board->display, 1);
-        DisplayToggleDot(board->display, 2);
-        DisplayToggleDot(board->display, 3);
+        EncenderPunto(0);
+        EncenderPunto(1);
+        EncenderPunto(2);
+        EncenderPunto(3);
         break;
     default:
         break;
@@ -151,6 +160,18 @@ void DecrementarBCD(uint8_t numero[2], const uint8_t limite[2]) {
     if ((numero[0] >= limite[0]) && numero[1] >= limite[1]) {
         numero[0] = limite[0];
         numero[1] = limite[1];
+    }
+}
+
+void EncenderPunto(int posicion) {
+    if (!DisplayToggleDot(board->display, posicion)) {
+        DisplayToggleDot(board->display, posicion);
+    }
+}
+
+void ApagarPunto(int posicion) {
+    if (DisplayToggleDot(board->display, posicion)) {
+        DisplayToggleDot(board->display, posicion);
     }
 }
 
