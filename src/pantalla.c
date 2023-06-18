@@ -144,8 +144,9 @@ void DisplayBlinkDigits(display_t display, uint8_t from, uint8_t to, uint16_t pe
     display->blink_period = period;
 }
 
-void DisplayToggleDot(display_t display, uint8_t digit) {
+bool DisplayToggleDot(display_t display, uint8_t digit) {
     display->memory[digit] ^= SEGMENT_P;
+    return (display->memory[digit] & SEGMENT_P);
 }
 
 /* === End of documentation ==================================================================== */

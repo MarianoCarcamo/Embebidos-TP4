@@ -28,6 +28,7 @@ SPDX-License-Identifier: MIT
 
 /* === Headers files inclusions ================================================================ */
 
+#include <stdbool.h>
 #include <stdint.h>
 
 /* === Cabecera C++ ============================================================================ */
@@ -111,8 +112,10 @@ void DisplayBlinkDigits(display_t display, uint8_t from, uint8_t to, uint16_t pe
  *
  * @param display Puntero a la pantalla
  * @param digit Punto del digito a alternar
+ * @return true Punto encendido
+ * @return false Punto apagado
  */
-void DisplayToggleDot(display_t display, uint8_t digit);
+bool DisplayToggleDot(display_t display, uint8_t digit);
 
 /* === End of documentation ==================================================================== */
 
