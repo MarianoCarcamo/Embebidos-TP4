@@ -254,6 +254,10 @@ int main(void) {
                 IncrementarBCD(&entrada[2], LIMITE_MINUTOS);
             } else if (modo == AJUSTANDO_HORA) {
                 IncrementarBCD(entrada, LIMITE_HORAS);
+            } else if (modo == AJUSTANDO_MINUTOS_ALARMA) {
+                IncrementarBCD(&entrada[2], LIMITE_MINUTOS);
+            } else if (modo == AJUSTANDO_HORA_ALARMA) {
+                IncrementarBCD(entrada, LIMITE_HORAS);
             }
             DisplayWriteBCD(board->display, entrada, sizeof(entrada));
         }
@@ -262,6 +266,10 @@ int main(void) {
             if (modo == AJUSTANDO_MINUTOS) {
                 DecrementarBCD(&entrada[2], LIMITE_MINUTOS);
             } else if (modo == AJUSTANDO_HORA) {
+                DecrementarBCD(entrada, LIMITE_HORAS);
+            } else if (modo == AJUSTANDO_MINUTOS_ALARMA) {
+                DecrementarBCD(&entrada[2], LIMITE_MINUTOS);
+            } else if (modo == AJUSTANDO_HORA_ALARMA) {
                 DecrementarBCD(entrada, LIMITE_HORAS);
             }
             DisplayWriteBCD(board->display, entrada, sizeof(entrada));
