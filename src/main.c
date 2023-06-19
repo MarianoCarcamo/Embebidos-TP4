@@ -47,8 +47,13 @@
 
 /* === Macros definitions ====================================================================== */
 
-#define TICS_POR_SEC     600
+#ifndef TICS_POR_SEC
+#define TICS_POR_SEC 1000
+#endif
+
+#ifndef PERIODO_PARPADEO
 #define PERIODO_PARPADEO 200
+#endif
 
 /* === Private data type declarations ========================================================== */
 
@@ -77,6 +82,8 @@ void EncenderPunto(int posicion);
 
 void ApagarPunto(int posicion);
 
+bool ContarSegundosMientras(int segundos, digital_input_t input);
+
 /* === Public variable definitions =============================================================
  */
 
@@ -85,6 +92,8 @@ static board_t board;
 static clock_t reloj;
 
 static modo_t modo;
+
+static int current_tic_value;
 
 /* === Private variable definitions ============================================================ */
 
@@ -175,6 +184,30 @@ void ApagarPunto(int posicion) {
     }
 }
 
+bool ContarSegundosMientras(int segundos, digital_input_t input) {
+    int current = current_tic_value;
+    int count_second = 0;
+    bool condicion = true;
+
+    while (count_second < segundos && condicion) {
+        if (current_tic_value == 0) {
+            count_second++;
+            while (current_tic_value == 0) {
+                __asm("NOP");
+            }
+        }
+        condicion = DigitalInputGetState(input);
+    }
+    while (current_tic_value < current && condicion) {
+        condicion = DigitalInputGetState(input);
+    }
+    if (current == current_tic_value && count_second == segundos) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
 /* === Public function implementation ========================================================= */
 
 int main(void) {
@@ -204,13 +237,13 @@ int main(void) {
             }
         }
 
-        if (DigitalInputHasActivated(board->set_time)) {
+        if (ContarSegundosMientras(3, board->set_time)) {
             CambiarModo(AJUSTANDO_MINUTOS);
             ClockGetTime(reloj, entrada, sizeof(entrada));
             DisplayWriteBCD(board->display, entrada, sizeof(entrada));
         }
 
-        if (DigitalInputHasActivated(board->set_alarm)) {
+        if (ContarSegundosMientras(3, board->set_alarm)) {
             CambiarModo(AJUSTANDO_MINUTOS_ALARMA);
             ClockGetAlarm(reloj, entrada, sizeof(entrada));
             DisplayWriteBCD(board->display, entrada, sizeof(entrada));
@@ -244,13 +277,12 @@ int main(void) {
 
 void SysTick_Handler(void) {
     static const int half_sec = TICS_POR_SEC / 2;
-    int current_value;
     uint8_t hora[6];
 
     DisplayRefresh(board->display);
-    current_value = ClockTic(reloj);
+    current_tic_value = ClockTic(reloj);
 
-    if (current_value == half_sec || current_value == 0) {
+    if (current_tic_value == half_sec || current_tic_value == 0) {
         if (modo <= MOSTRANDO_HORA) {
             ClockGetTime(reloj, hora, sizeof(hora));
             DisplayWriteBCD(board->display, hora, sizeof(hora));
