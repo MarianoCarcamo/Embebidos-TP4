@@ -107,6 +107,7 @@ static const uint8_t LIMITE_HORAS[] = {2, 3};
 /* === Private function implementation ========================================================= */
 
 void DisparoAlarma(clock_t reloj) {
+    DigitalOutputActivate(board->buzzer);
 }
 
 void CambiarModo(modo_t valor) {
