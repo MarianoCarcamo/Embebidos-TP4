@@ -48,11 +48,15 @@
 /* === Macros definitions ====================================================================== */
 
 #ifndef TICS_POR_SEC
-#define TICS_POR_SEC 1000
+#define TICS_POR_SEC 600
 #endif
 
 #ifndef PERIODO_PARPADEO
 #define PERIODO_PARPADEO 200
+#endif
+
+#ifndef SNOOZE_MINUTOS
+#define SNOOZE_MINUTOS 5
 #endif
 
 /* === Private data type declarations ========================================================== */
@@ -82,11 +86,12 @@ void EncenderPunto(int posicion);
 
 void ApagarPunto(int posicion);
 
-bool ContarSegundosMientras(int segundos, digital_input_t input);
+bool ContarSegundosMientras(int segundos, const digital_input_t input);
 
 void ActivarAlarma(clock_t reloj);
 
 void DesactivarAlarma(clock_t reloj);
+
 /* === Public variable definitions =============================================================
  */
 
@@ -98,6 +103,8 @@ static modo_t modo;
 
 static int current_tic_value;
 
+static bool alarma_tetigo = false;
+
 /* === Private variable definitions ============================================================ */
 
 static const uint8_t LIMITE_MINUTOS[] = {5, 9};
@@ -108,6 +115,7 @@ static const uint8_t LIMITE_HORAS[] = {2, 3};
 
 void DisparoAlarma(clock_t reloj) {
     DigitalOutputActivate(board->buzzer);
+    alarma_tetigo = true;
 }
 
 void CambiarModo(modo_t valor) {
@@ -197,7 +205,7 @@ void ApagarPunto(int posicion) {
     }
 }
 
-bool ContarSegundosMientras(int segundos, digital_input_t input) {
+bool ContarSegundosMientras(int segundos, const digital_input_t input) {
     int current = current_tic_value;
     int count_second = 0;
     bool condicion = true;
@@ -248,29 +256,41 @@ int main(void) {
 
     while (true) {
         if (DigitalInputHasActivated(board->accept)) {
-            if (modo == MOSTRANDO_HORA) {
-                ActivarAlarma(reloj);
-            } else if (modo == AJUSTANDO_MINUTOS) {
-                CambiarModo(AJUSTANDO_HORA);
-            } else if (modo == AJUSTANDO_HORA) {
-                ClockSetTime(reloj, entrada, sizeof(entrada));
-                CambiarModo(MOSTRANDO_HORA);
-            } else if (modo == AJUSTANDO_MINUTOS_ALARMA) {
-                CambiarModo(AJUSTANDO_HORA_ALARMA);
-            } else if (modo == AJUSTANDO_HORA_ALARMA) {
-                ClockSetAlarm(reloj, entrada, sizeof(entrada));
-                ActivarAlarma(reloj);
-                CambiarModo(MOSTRANDO_HORA);
+            if (!alarma_tetigo) {
+                if (modo == MOSTRANDO_HORA) {
+                    ActivarAlarma(reloj);
+                } else if (modo == AJUSTANDO_MINUTOS) {
+                    CambiarModo(AJUSTANDO_HORA);
+                } else if (modo == AJUSTANDO_HORA) {
+                    ClockSetTime(reloj, entrada, sizeof(entrada));
+                    CambiarModo(MOSTRANDO_HORA);
+                } else if (modo == AJUSTANDO_MINUTOS_ALARMA) {
+                    CambiarModo(AJUSTANDO_HORA_ALARMA);
+                } else if (modo == AJUSTANDO_HORA_ALARMA) {
+                    ClockSetAlarm(reloj, entrada, sizeof(entrada));
+                    CambiarModo(MOSTRANDO_HORA);
+                    ActivarAlarma(reloj);
+                }
+            } else {
+                DigitalOutputDeactivate(board->buzzer);
+                AlarmSnooze(reloj, SNOOZE_MINUTOS);
+                alarma_tetigo = false;
             }
         }
 
         if (DigitalInputHasActivated(board->cancel)) {
-            if (ClockGetTime(reloj, entrada, sizeof(entrada)) && (modo != MOSTRANDO_HORA)) {
-                CambiarModo(MOSTRANDO_HORA);
-            } else if (modo == MOSTRANDO_HORA) {
-                DesactivarAlarma(reloj);
+            if (!alarma_tetigo) {
+                if (modo == MOSTRANDO_HORA) {
+                    DesactivarAlarma(reloj);
+                } else if (ClockGetTime(reloj, entrada, sizeof(entrada)) &&
+                           (modo != MOSTRANDO_HORA)) {
+                    CambiarModo(MOSTRANDO_HORA);
+                } else {
+                    CambiarModo(SIN_CONFIGURAR);
+                }
             } else {
-                CambiarModo(SIN_CONFIGURAR);
+                DigitalOutputDeactivate(board->buzzer);
+                alarma_tetigo = false;
             }
         }
 
