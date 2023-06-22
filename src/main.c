@@ -48,7 +48,7 @@
 /* === Macros definitions ====================================================================== */
 
 #ifndef TICS_POR_SEC
-#define TICS_POR_SEC 600
+#define TICS_POR_SEC 1000
 #endif
 
 #ifndef PERIODO_PARPADEO
@@ -282,28 +282,16 @@ int main(void) {
             }
         }
 
-        if (DigitalInputHasActivated(board->cancel) ||
-            ContarSegundosMientras(10, false, 6,
-                                   (digital_input_t[]){board->accept, board->cancel,
-                                                       board->set_time, board->set_alarm,
-                                                       board->increment, board->decrement})) {
+        if (DigitalInputHasActivated(board->cancel)) {
             if (!alarma_tetigo) {
-                if (DigitalInputHasActivated(board->cancel)) {
-                    if (modo == MOSTRANDO_HORA) {
-                        AlarmDeactivate(reloj);
-                        DisplayTurnOffDot(board->display, 3);
-                    } else if (ClockGetTime(reloj, entrada, sizeof(entrada)) &&
-                               (modo != MOSTRANDO_HORA)) {
-                        CambiarModo(MOSTRANDO_HORA);
-                    } else {
-                        CambiarModo(SIN_CONFIGURAR);
-                    }
+                if (modo == MOSTRANDO_HORA) {
+                    AlarmDeactivate(reloj);
+                    DisplayTurnOffDot(board->display, 3);
+                } else if (ClockGetTime(reloj, entrada, sizeof(entrada)) &&
+                           (modo != MOSTRANDO_HORA)) {
+                    CambiarModo(MOSTRANDO_HORA);
                 } else {
-                    if (ClockGetTime(reloj, entrada, sizeof(entrada))) {
-                        CambiarModo(MOSTRANDO_HORA);
-                    } else {
-                        CambiarModo(SIN_CONFIGURAR);
-                    }
+                    CambiarModo(SIN_CONFIGURAR);
                 }
             } else {
                 DigitalOutputDeactivate(board->buzzer);
@@ -354,6 +342,19 @@ int main(void) {
             } else if (modo == AJUSTANDO_HORA_ALARMA) {
                 DecrementarBCD(entrada, LIMITE_HORAS);
                 DisplayWriteBCD(board->display, entrada, sizeof(entrada));
+            }
+        }
+
+        if (ContarSegundosMientras(10, false, 6,
+                                   (digital_input_t[]){board->accept, board->cancel,
+                                                       board->set_time, board->set_alarm,
+                                                       board->increment, board->decrement})) {
+            if (modo > MOSTRANDO_HORA) {
+                if (ClockGetTime(reloj, entrada, sizeof(entrada))) {
+                    CambiarModo(MOSTRANDO_HORA);
+                } else {
+                    CambiarModo(SIN_CONFIGURAR);
+                }
             }
         }
 
