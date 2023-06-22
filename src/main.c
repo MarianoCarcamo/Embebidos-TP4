@@ -96,7 +96,9 @@ static modo_t modo;
 
 static int current_tic_value;
 
-static bool alarma_tetigo = false;
+static int sec_count_down = 0;
+
+static bool alarma_sonando = false;
 
 /* === Private variable definitions ============================================================ */
 
@@ -108,7 +110,7 @@ static const uint8_t LIMITE_HORAS[] = {2, 3};
 
 void DisparoAlarma(clock_t reloj) {
     DigitalOutputActivate(board->buzzer);
-    alarma_tetigo = true;
+    alarma_sonando = true;
 }
 
 void CambiarModo(modo_t valor) {
@@ -188,61 +190,29 @@ void DecrementarBCD(uint8_t numero[2], const uint8_t limite[2]) {
 
 bool ContarSegundosMientras(int segundos, bool estado, int cantidad_entradas,
                             const digital_input_t input[]) {
-    int current = current_tic_value;
-    int count_second = 0;
+    sec_count_down = segundos;
     bool condicion = estado;
+
     if (condicion) {
-        while (count_second < segundos && condicion) {
-            if (current_tic_value == 0) {
-                count_second++;
-                while (current_tic_value == 0) {
-                    __asm("NOP");
-                }
-            }
+        while (sec_count_down > 0 && condicion) {
             for (int index = 0; index < cantidad_entradas; index++) {
                 condicion = DigitalInputGetState(input[index]);
                 if (!condicion) {
-                    break;
-                }
-            }
-        }
-        while (current_tic_value < current && condicion) {
-            for (int index = 0; index < cantidad_entradas; index++) {
-                condicion = DigitalInputGetState(input[index]);
-                if (!condicion) {
-                    break;
+                    return false;
                 }
             }
         }
     } else {
-        while (count_second < segundos && !condicion) {
-            if (current_tic_value == 0) {
-                count_second++;
-                while (current_tic_value == 0) {
-                    __asm("NOP");
-                }
-            }
+        while (sec_count_down > 0 && !condicion) {
             for (int index = 0; index < cantidad_entradas; index++) {
                 condicion = DigitalInputGetState(input[index]);
                 if (condicion) {
-                    break;
-                }
-            }
-        }
-        while (current_tic_value < current && !condicion) {
-            for (int index = 0; index < cantidad_entradas; index++) {
-                condicion = DigitalInputGetState(input[index]);
-                if (condicion) {
-                    break;
+                    return false;
                 }
             }
         }
     }
-    if (current == current_tic_value && count_second == segundos) {
-        return true;
-    } else {
-        return false;
-    }
+    return true;
 }
 
 /* === Public function implementation ========================================================= */
@@ -258,7 +228,7 @@ int main(void) {
 
     while (true) {
         if (DigitalInputHasActivated(board->accept)) {
-            if (!alarma_tetigo) {
+            if (!alarma_sonando) {
                 if (modo == MOSTRANDO_HORA) {
                     AlarmActivate(reloj);
                     DisplayTurnOnDot(board->display, 3);
@@ -278,12 +248,12 @@ int main(void) {
             } else {
                 DigitalOutputDeactivate(board->buzzer);
                 AlarmSnooze(reloj, SNOOZE_MINUTOS);
-                alarma_tetigo = false;
+                alarma_sonando = false;
             }
         }
 
         if (DigitalInputHasActivated(board->cancel)) {
-            if (!alarma_tetigo) {
+            if (!alarma_sonando) {
                 if (modo == MOSTRANDO_HORA) {
                     AlarmDeactivate(reloj);
                     DisplayTurnOffDot(board->display, 3);
@@ -295,7 +265,7 @@ int main(void) {
                 }
             } else {
                 DigitalOutputDeactivate(board->buzzer);
-                alarma_tetigo = false;
+                alarma_sonando = false;
             }
         }
 
@@ -379,6 +349,9 @@ void SysTick_Handler(void) {
             DisplayWriteBCD(board->display, hora, sizeof(hora));
             if (modo == MOSTRANDO_HORA)
                 DisplayToggleDot(board->display, 1);
+        }
+        if ((current_tic_value == 0) && sec_count_down) {
+            sec_count_down--;
         }
     }
 }
