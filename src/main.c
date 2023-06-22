@@ -224,7 +224,8 @@ int main(void) {
         if (DigitalInputHasActivated(board->accept)) {
             if (!alarma_tetigo) {
                 if (modo == MOSTRANDO_HORA) {
-                    ActivarAlarma(reloj);
+                    AlarmActivate(reloj);
+                    DisplayTurnOnDot(board->display, 3);
                 } else if (modo == AJUSTANDO_MINUTOS) {
                     CambiarModo(AJUSTANDO_HORA);
                 } else if (modo == AJUSTANDO_HORA) {
