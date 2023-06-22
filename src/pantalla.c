@@ -149,6 +149,17 @@ bool DisplayToggleDot(display_t display, uint8_t digit) {
     return (display->memory[digit] & SEGMENT_P);
 }
 
+void DisplayTurnOnDot(display_t display, uint8_t digit) {
+    if (!DisplayToggleDot(display, digit)) {
+        DisplayToggleDot(display, digit);
+    }
+}
+
+void DisplayTurnOffDot(display_t display, uint8_t digit) {
+    if (DisplayToggleDot(display, digit)) {
+        DisplayToggleDot(display, digit);
+    }
+}
 /* === End of documentation ==================================================================== */
 
 /** @} End of module definition for doxygen */

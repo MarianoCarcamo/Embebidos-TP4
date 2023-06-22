@@ -117,6 +117,22 @@ void DisplayBlinkDigits(display_t display, uint8_t from, uint8_t to, uint16_t pe
  */
 bool DisplayToggleDot(display_t display, uint8_t digit);
 
+/**
+ * @brief Funcion para prender un punto
+ *
+ * @param display Puntero a la pantalla
+ * @param digit Punto del digito a encender
+ */
+void DisplayTurnOnDot(display_t display, uint8_t digit);
+
+/**
+ * @brief Funcion para apagar un puntos
+ *
+ * @param display Puntero a la pantalla
+ * @param digit Punto del digito a apagar
+ */
+void DisplayTurnOffDot(display_t display, uint8_t digit);
+
 /* === End of documentation ==================================================================== */
 
 #ifdef __cplusplus

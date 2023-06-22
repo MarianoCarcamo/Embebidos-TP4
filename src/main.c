@@ -82,15 +82,7 @@ void IncrementarBCD(uint8_t numero[2], const uint8_t limite[2]);
 
 void DecrementarBCD(uint8_t numero[2], const uint8_t limite[2]);
 
-void EncenderPunto(int posicion);
-
-void ApagarPunto(int posicion);
-
 bool ContarSegundosMientras(int segundos, const digital_input_t input);
-
-void ActivarAlarma(clock_t reloj);
-
-void DesactivarAlarma(clock_t reloj);
 
 /* === Public variable definitions =============================================================
  */
@@ -124,45 +116,45 @@ void CambiarModo(modo_t valor) {
     switch (modo) {
     case SIN_CONFIGURAR:
         DisplayBlinkDigits(board->display, 0, 3, PERIODO_PARPADEO);
-        EncenderPunto(1);
-        ApagarPunto(0);
-        ApagarPunto(2);
-        ApagarPunto(3);
+        DisplayTurnOnDot(board->display, 1);
+        DisplayTurnOffDot(board->display, 0);
+        DisplayTurnOffDot(board->display, 2);
+        DisplayTurnOffDot(board->display, 3);
         break;
     case MOSTRANDO_HORA:
         DisplayBlinkDigits(board->display, 0, 3, 0);
-        ApagarPunto(0);
-        ApagarPunto(1);
-        ApagarPunto(2);
-        ApagarPunto(3);
+        DisplayTurnOffDot(board->display, 0);
+        DisplayTurnOffDot(board->display, 1);
+        DisplayTurnOffDot(board->display, 2);
+        DisplayTurnOffDot(board->display, 3);
         break;
     case AJUSTANDO_MINUTOS:
         DisplayBlinkDigits(board->display, 2, 3, PERIODO_PARPADEO);
-        EncenderPunto(1);
-        ApagarPunto(0);
-        ApagarPunto(2);
-        ApagarPunto(3);
+        DisplayTurnOnDot(board->display, 1);
+        DisplayTurnOffDot(board->display, 0);
+        DisplayTurnOffDot(board->display, 2);
+        DisplayTurnOffDot(board->display, 3);
         break;
     case AJUSTANDO_HORA:
         DisplayBlinkDigits(board->display, 0, 1, PERIODO_PARPADEO);
-        EncenderPunto(1);
-        ApagarPunto(0);
-        ApagarPunto(2);
-        ApagarPunto(3);
+        DisplayTurnOnDot(board->display, 1);
+        DisplayTurnOffDot(board->display, 0);
+        DisplayTurnOffDot(board->display, 2);
+        DisplayTurnOffDot(board->display, 3);
         break;
     case AJUSTANDO_MINUTOS_ALARMA:
         DisplayBlinkDigits(board->display, 2, 3, PERIODO_PARPADEO);
-        EncenderPunto(0);
-        EncenderPunto(1);
-        EncenderPunto(2);
-        EncenderPunto(3);
+        DisplayTurnOnDot(board->display, 0);
+        DisplayTurnOnDot(board->display, 1);
+        DisplayTurnOnDot(board->display, 2);
+        DisplayTurnOnDot(board->display, 3);
         break;
     case AJUSTANDO_HORA_ALARMA:
         DisplayBlinkDigits(board->display, 0, 1, PERIODO_PARPADEO);
-        EncenderPunto(0);
-        EncenderPunto(1);
-        EncenderPunto(2);
-        EncenderPunto(3);
+        DisplayTurnOnDot(board->display, 0);
+        DisplayTurnOnDot(board->display, 1);
+        DisplayTurnOnDot(board->display, 2);
+        DisplayTurnOnDot(board->display, 3);
         break;
     default:
         break;
@@ -193,18 +185,6 @@ void DecrementarBCD(uint8_t numero[2], const uint8_t limite[2]) {
     }
 }
 
-void EncenderPunto(int posicion) {
-    if (!DisplayToggleDot(board->display, posicion)) {
-        DisplayToggleDot(board->display, posicion);
-    }
-}
-
-void ApagarPunto(int posicion) {
-    if (DisplayToggleDot(board->display, posicion)) {
-        DisplayToggleDot(board->display, posicion);
-    }
-}
-
 bool ContarSegundosMientras(int segundos, const digital_input_t input) {
     int current = current_tic_value;
     int count_second = 0;
@@ -227,20 +207,6 @@ bool ContarSegundosMientras(int segundos, const digital_input_t input) {
     } else {
         return false;
     }
-}
-
-void ActivarAlarma(clock_t reloj) {
-    if (!AlarmToggel(reloj)) {
-        AlarmToggel(reloj);
-    }
-    EncenderPunto(3);
-}
-
-void DesactivarAlarma(clock_t reloj) {
-    if (AlarmToggel(reloj)) {
-        AlarmToggel(reloj);
-    }
-    ApagarPunto(3);
 }
 
 /* === Public function implementation ========================================================= */
@@ -269,7 +235,8 @@ int main(void) {
                 } else if (modo == AJUSTANDO_HORA_ALARMA) {
                     ClockSetAlarm(reloj, entrada, sizeof(entrada));
                     CambiarModo(MOSTRANDO_HORA);
-                    ActivarAlarma(reloj);
+                    AlarmActivate(reloj);
+                    DisplayTurnOnDot(board->display, 3);
                 }
             } else {
                 DigitalOutputDeactivate(board->buzzer);
@@ -281,7 +248,8 @@ int main(void) {
         if (DigitalInputHasActivated(board->cancel)) {
             if (!alarma_tetigo) {
                 if (modo == MOSTRANDO_HORA) {
-                    DesactivarAlarma(reloj);
+                    AlarmDeactivate(reloj);
+                    DisplayTurnOffDot(board->display, 3);
                 } else if (ClockGetTime(reloj, entrada, sizeof(entrada)) &&
                            (modo != MOSTRANDO_HORA)) {
                     CambiarModo(MOSTRANDO_HORA);

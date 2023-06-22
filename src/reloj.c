@@ -174,6 +174,18 @@ bool AlarmToggel(clock_t reloj) {
     return reloj->alarma->habilitada;
 }
 
+void AlarmActivate(clock_t reloj) {
+    if (!AlarmToggel(reloj)) {
+        AlarmToggel(reloj);
+    }
+}
+
+void AlarmDeactivate(clock_t reloj) {
+    if (AlarmToggel(reloj)) {
+        AlarmToggel(reloj);
+    }
+}
+
 void AlarmSnooze(clock_t reloj, int min) {
     reloj->alarma->snooze_count = min * 60;
 }

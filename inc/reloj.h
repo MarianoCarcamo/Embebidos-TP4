@@ -128,6 +128,20 @@ bool ClockSetAlarm(clock_t reloj, const uint8_t * hora, int size);
 bool AlarmToggel(clock_t reloj);
 
 /**
+ * @brief Metodo para activar la alarma
+ *
+ * @param reloj Descriptor de la alarma
+ */
+void AlarmActivate(clock_t reloj);
+
+/**
+ * @brief Metodo para desactivar la alarma
+ *
+ * @param reloj Descriptor de la alarma
+ */
+void AlarmDeactivate(clock_t reloj);
+
+/**
  * @brief Metodo para posponer la alarma
  *
  * @param reloj Descriptor del reloj.
