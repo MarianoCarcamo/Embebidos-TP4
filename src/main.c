@@ -82,6 +82,23 @@ void IncrementarBCD(uint8_t numero[2], const uint8_t limite[2]);
 
 void DecrementarBCD(uint8_t numero[2], const uint8_t limite[2]);
 
+/**
+ * @brief Cuentar segundos si se cumple una determinada condicion en las entradas
+ *
+ * Esta funcion permite contar una determinada cantidad de segundos mientras las entradas estan en
+ * un estado determinado, ya sea en On u Off.
+ * Esta funcion utiliza una variable global llamada "sec_count_down", una vez llegada a cero
+ * (realizando el decremento en el systic) cumpliendo con las condiciones indicadas, la funcion
+ * retorna un "true", caso contrario, retorna "false".
+ *
+ * @param segundos Cantidad de segundos
+ * @param estado Estado en el que evaluar las entradas
+ * @param cantidad_entradas Numero de entradas a evaluar
+ * @param input Vector con entradas
+ * @return true En caso de haber cumplido el tiempo en las condiciones indicadas
+ * @return false En caso de no haber cumplido el tiempo en las condiciones indicadas
+ */
+
 bool ContarSegundosMientras(int segundos, bool estado, int cantidad_entradas,
                             const digital_input_t input[]);
 
@@ -315,7 +332,7 @@ int main(void) {
             }
         }
 
-        if (ContarSegundosMientras(10, false, 6,
+        if (ContarSegundosMientras(30, false, 6,
                                    (digital_input_t[]){board->accept, board->cancel,
                                                        board->set_time, board->set_alarm,
                                                        board->increment, board->decrement})) {
