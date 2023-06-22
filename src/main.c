@@ -82,7 +82,8 @@ void IncrementarBCD(uint8_t numero[2], const uint8_t limite[2]);
 
 void DecrementarBCD(uint8_t numero[2], const uint8_t limite[2]);
 
-bool ContarSegundosMientras(int segundos, const digital_input_t input);
+bool ContarSegundosMientras(int segundos, bool estado, int cantidad_entradas,
+                            const digital_input_t input[]);
 
 /* === Public variable definitions =============================================================
  */
@@ -185,22 +186,57 @@ void DecrementarBCD(uint8_t numero[2], const uint8_t limite[2]) {
     }
 }
 
-bool ContarSegundosMientras(int segundos, const digital_input_t input) {
+bool ContarSegundosMientras(int segundos, bool estado, int cantidad_entradas,
+                            const digital_input_t input[]) {
     int current = current_tic_value;
     int count_second = 0;
-    bool condicion = true;
-
-    while (count_second < segundos && condicion) {
-        if (current_tic_value == 0) {
-            count_second++;
-            while (current_tic_value == 0) {
-                __asm("NOP");
+    bool condicion = estado;
+    if (condicion) {
+        while (count_second < segundos && condicion) {
+            if (current_tic_value == 0) {
+                count_second++;
+                while (current_tic_value == 0) {
+                    __asm("NOP");
+                }
+            }
+            for (int index = 0; index < cantidad_entradas; index++) {
+                condicion = DigitalInputGetState(input[index]);
+                if (!condicion) {
+                    break;
+                }
             }
         }
-        condicion = DigitalInputGetState(input);
-    }
-    while (current_tic_value < current && condicion) {
-        condicion = DigitalInputGetState(input);
+        while (current_tic_value < current && condicion) {
+            for (int index = 0; index < cantidad_entradas; index++) {
+                condicion = DigitalInputGetState(input[index]);
+                if (!condicion) {
+                    break;
+                }
+            }
+        }
+    } else {
+        while (count_second < segundos && !condicion) {
+            if (current_tic_value == 0) {
+                count_second++;
+                while (current_tic_value == 0) {
+                    __asm("NOP");
+                }
+            }
+            for (int index = 0; index < cantidad_entradas; index++) {
+                condicion = DigitalInputGetState(input[index]);
+                if (condicion) {
+                    break;
+                }
+            }
+        }
+        while (current_tic_value < current && !condicion) {
+            for (int index = 0; index < cantidad_entradas; index++) {
+                condicion = DigitalInputGetState(input[index]);
+                if (condicion) {
+                    break;
+                }
+            }
+        }
     }
     if (current == current_tic_value && count_second == segundos) {
         return true;
@@ -246,16 +282,28 @@ int main(void) {
             }
         }
 
-        if (DigitalInputHasActivated(board->cancel)) {
+        if (DigitalInputHasActivated(board->cancel) ||
+            ContarSegundosMientras(10, false, 6,
+                                   (digital_input_t[]){board->accept, board->cancel,
+                                                       board->set_time, board->set_alarm,
+                                                       board->increment, board->decrement})) {
             if (!alarma_tetigo) {
-                if (modo == MOSTRANDO_HORA) {
-                    AlarmDeactivate(reloj);
-                    DisplayTurnOffDot(board->display, 3);
-                } else if (ClockGetTime(reloj, entrada, sizeof(entrada)) &&
-                           (modo != MOSTRANDO_HORA)) {
-                    CambiarModo(MOSTRANDO_HORA);
+                if (DigitalInputHasActivated(board->cancel)) {
+                    if (modo == MOSTRANDO_HORA) {
+                        AlarmDeactivate(reloj);
+                        DisplayTurnOffDot(board->display, 3);
+                    } else if (ClockGetTime(reloj, entrada, sizeof(entrada)) &&
+                               (modo != MOSTRANDO_HORA)) {
+                        CambiarModo(MOSTRANDO_HORA);
+                    } else {
+                        CambiarModo(SIN_CONFIGURAR);
+                    }
                 } else {
-                    CambiarModo(SIN_CONFIGURAR);
+                    if (ClockGetTime(reloj, entrada, sizeof(entrada))) {
+                        CambiarModo(MOSTRANDO_HORA);
+                    } else {
+                        CambiarModo(SIN_CONFIGURAR);
+                    }
                 }
             } else {
                 DigitalOutputDeactivate(board->buzzer);
@@ -263,13 +311,13 @@ int main(void) {
             }
         }
 
-        if (ContarSegundosMientras(3, board->set_time)) {
+        if (ContarSegundosMientras(3, true, 1, &(board->set_time))) {
             CambiarModo(AJUSTANDO_MINUTOS);
             ClockGetTime(reloj, entrada, sizeof(entrada));
             DisplayWriteBCD(board->display, entrada, sizeof(entrada));
         }
 
-        if (ContarSegundosMientras(3, board->set_alarm) &&
+        if (ContarSegundosMientras(3, true, 1, &(board->set_alarm)) &&
             ClockGetTime(reloj, entrada, sizeof(entrada))) {
 
             CambiarModo(AJUSTANDO_MINUTOS_ALARMA);
