@@ -39,7 +39,7 @@ struct display_s {
     uint8_t active_digit;
     uint8_t blink_from;
     uint8_t blink_to;
-    uint8_t blink_period;
+    uint16_t blink_period;
     uint16_t blink_count;
     uint8_t memory[DISPLAY_MAX_DIGITS];
     struct display_driver_s driver[1];
@@ -123,7 +123,7 @@ void DisplayRefresh(display_t display) {
     segments = display->memory[display->active_digit];
     if (display->blink_period) {
         if (display->active_digit == 0) {
-            display->blink_count = (display->blink_count + 1) % display->blink_period;
+            display->blink_count = (display->blink_count + display->digits) % display->blink_period;
         }
         if (display->active_digit >= display->blink_from &&
             display->active_digit <= display->blink_to) {

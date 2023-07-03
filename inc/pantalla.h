@@ -100,6 +100,8 @@ void DisplayRefresh(display_t display);
 /**
  * @brief Funcion para parpadear digitos
  *
+ *  Esta funcion tiene ciclo de trabajo del 50% sobre el periodo "period"
+ *
  * @param display Puntero a la pantalla
  * @param from Desde que digito parpadear
  * @param to Hasta que digito parpadear

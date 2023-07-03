@@ -52,7 +52,7 @@
 #endif
 
 #ifndef PERIODO_PARPADEO
-#define PERIODO_PARPADEO 200
+#define PERIODO_PARPADEO 1000
 #endif
 
 #ifndef SNOOZE_MINUTOS
