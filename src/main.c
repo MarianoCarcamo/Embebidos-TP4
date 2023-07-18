@@ -44,6 +44,10 @@
 #include "reloj.h"
 #include <stdbool.h>
 #include <stddef.h>
+#include "FreeRTOS.h"
+#include "bsp.h"
+#include "semphr.h"
+#include "task.h"
 
 /* === Macros definitions ====================================================================== */
 
