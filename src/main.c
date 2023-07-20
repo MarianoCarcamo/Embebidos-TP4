@@ -48,8 +48,23 @@
 #include "bsp.h"
 #include "semphr.h"
 #include "task.h"
+#include "event_groups.h"
 
 /* === Macros definitions ====================================================================== */
+
+#define EVENT_KEY_ACCEPT_ON    (1 << 0)
+#define EVENT_KEY_CANCEL_ON    (1 << 1)
+#define EVENT_KEY_INCREMENT_ON (1 << 2)
+#define EVENT_KEY_DECREMENT_ON (1 << 3)
+#define EVENT_KEY_SET_TIME_ON  (1 << 4)
+#define EVENT_KEY_SET_ALARM_ON (1 << 5)
+
+#define EVENT_KEY_ACCEPT_OFF    (1 << 6)
+#define EVENT_KEY_CANCEL_OFF    (1 << 7)
+#define EVENT_KEY_INCREMENT_OFF (1 << 8)
+#define EVENT_KEY_DECREMENT_OFF (1 << 9)
+#define EVENT_KEY_SET_TIME_OFF  (1 << 10)
+#define EVENT_KEY_SET_ALARM_OFF (1 << 11)
 
 #ifndef TICS_POR_SEC
 #define TICS_POR_SEC 1000
@@ -77,6 +92,26 @@ typedef enum {
 /* === Private variable declarations =========================================================== */
 
 /* === Private function declarations =========================================================== */
+
+// static void ClockTask(void * object);
+
+static void AcceptProgTask(void * object);
+
+static void CancelProgTask(void * object);
+
+static void IncrementProgTask(void * object);
+
+static void DecrementProgTask(void * object);
+
+static void SetTimeProgTask(void * object);
+
+static void SetAlarmProgTask(void * object);
+
+static void TickTask(void * object);
+
+static void DisplayRefreshTask(void * object);
+
+static void KeyTask(void * object);
 
 void DisparoAlarma(clock_t reloj);
 
@@ -120,6 +155,10 @@ static int current_tic_value;
 static int sec_count_down = 0;
 
 static bool alarma_sonando = false;
+
+static uint8_t entrada[4];
+
+EventGroupHandle_t app_events;
 
 /* === Private variable definitions ============================================================ */
 
@@ -236,145 +275,212 @@ bool ContarSegundosMientras(int segundos, bool estado, int cantidad_entradas,
     return true;
 }
 
+static void DisplayRefreshTask(void * object) {
+    while (true) {
+        DisplayRefresh(board->display);
+        vTaskDelay(pdMS_TO_TICKS(1));
+    }
+}
+
+static void TickTask(void * object) {
+    TickType_t last_value = xTaskGetTickCount();
+    static const int half_sec = TICS_POR_SEC / 2;
+    uint8_t hora[6];
+
+    while (true) {
+        current_tic_value = ClockTic(reloj);
+
+        if (current_tic_value == half_sec || current_tic_value == 0) {
+            if (modo <= MOSTRANDO_HORA) {
+                ClockGetTime(reloj, hora, sizeof(hora));
+                DisplayWriteBCD(board->display, hora, sizeof(hora));
+                if (modo == MOSTRANDO_HORA)
+                    DisplayToggleDot(board->display, 1);
+            }
+            if ((current_tic_value == 0) && sec_count_down) {
+                sec_count_down--;
+            }
+        }
+        vTaskDelayUntil(&last_value, pdMS_TO_TICKS(1));
+    }
+}
+
+static void KeyTask(void * object) {
+    uint16_t last_state, current_state, changes, events;
+
+    while (true) {
+        vTaskDelay(pdMS_TO_TICKS(150));
+
+        current_state = 0;
+        if (DigitalInputGetState(board->accept)) {
+            current_state |= EVENT_KEY_ACCEPT_ON;
+        };
+        if (DigitalInputGetState(board->cancel)) {
+            current_state |= EVENT_KEY_CANCEL_ON;
+        };
+        if (DigitalInputGetState(board->increment)) {
+            current_state |= EVENT_KEY_INCREMENT_ON;
+        };
+        if (DigitalInputGetState(board->decrement)) {
+            current_state |= EVENT_KEY_DECREMENT_ON;
+        };
+        if (DigitalInputGetState(board->set_time)) {
+            current_state |= EVENT_KEY_SET_TIME_ON;
+        };
+        if (DigitalInputGetState(board->set_alarm)) {
+            current_state |= EVENT_KEY_SET_ALARM_ON;
+        };
+
+        changes = current_state ^ last_state;
+        last_state = current_state;
+        events = ((changes & !current_state << 6) | (changes & current_state));
+
+        xEventGroupSetBits(app_events, events);
+    }
+}
+
+static void AcceptProgTask(void * object) {
+    while (true) {
+        xEventGroupWaitBits(app_events, EVENT_KEY_ACCEPT_ON, true, false, portMAX_DELAY);
+
+        if (!alarma_sonando) {
+            if (modo == MOSTRANDO_HORA) {
+                AlarmActivate(reloj);
+                DisplayTurnOnDot(board->display, 3);
+            } else if (modo == AJUSTANDO_MINUTOS) {
+                CambiarModo(AJUSTANDO_HORA);
+            } else if (modo == AJUSTANDO_HORA) {
+                ClockSetTime(reloj, entrada, sizeof(entrada));
+                CambiarModo(MOSTRANDO_HORA);
+            } else if (modo == AJUSTANDO_MINUTOS_ALARMA) {
+                CambiarModo(AJUSTANDO_HORA_ALARMA);
+            } else if (modo == AJUSTANDO_HORA_ALARMA) {
+                ClockSetAlarm(reloj, entrada, sizeof(entrada));
+                CambiarModo(MOSTRANDO_HORA);
+                AlarmActivate(reloj);
+                DisplayTurnOnDot(board->display, 3);
+            }
+        } else {
+            DigitalOutputDeactivate(board->buzzer);
+            AlarmSnooze(reloj, SNOOZE_MINUTOS);
+            alarma_sonando = false;
+        }
+    }
+}
+
+static void CancelProgTask(void * object) {
+    while (true) {
+        xEventGroupWaitBits(app_events, EVENT_KEY_CANCEL_ON, true, false, portMAX_DELAY);
+
+        if (!alarma_sonando) {
+            if (modo == MOSTRANDO_HORA) {
+                AlarmDeactivate(reloj);
+                DisplayTurnOffDot(board->display, 3);
+            } else if (ClockGetTime(reloj, entrada, sizeof(entrada)) && (modo != MOSTRANDO_HORA)) {
+                CambiarModo(MOSTRANDO_HORA);
+            } else {
+                CambiarModo(SIN_CONFIGURAR);
+            }
+        } else {
+            DigitalOutputDeactivate(board->buzzer);
+            alarma_sonando = false;
+        }
+    }
+}
+
+static void IncrementProgTask(void * object) {
+    while (true) {
+        xEventGroupWaitBits(app_events, EVENT_KEY_INCREMENT_ON, true, false, portMAX_DELAY);
+
+        if (modo == AJUSTANDO_MINUTOS) {
+            IncrementarBCD(&entrada[2], LIMITE_MINUTOS);
+            DisplayWriteBCD(board->display, entrada, sizeof(entrada));
+        } else if (modo == AJUSTANDO_HORA) {
+            IncrementarBCD(entrada, LIMITE_HORAS);
+            DisplayWriteBCD(board->display, entrada, sizeof(entrada));
+        } else if (modo == AJUSTANDO_MINUTOS_ALARMA) {
+            IncrementarBCD(&entrada[2], LIMITE_MINUTOS);
+            DisplayWriteBCD(board->display, entrada, sizeof(entrada));
+        } else if (modo == AJUSTANDO_HORA_ALARMA) {
+            IncrementarBCD(entrada, LIMITE_HORAS);
+            DisplayWriteBCD(board->display, entrada, sizeof(entrada));
+        }
+    }
+}
+
+static void DecrementProgTask(void * object) {
+    while (true) {
+        xEventGroupWaitBits(app_events, EVENT_KEY_DECREMENT_ON, true, false, portMAX_DELAY);
+
+        if (modo == AJUSTANDO_MINUTOS) {
+            DecrementarBCD(&entrada[2], LIMITE_MINUTOS);
+            DisplayWriteBCD(board->display, entrada, sizeof(entrada));
+        } else if (modo == AJUSTANDO_HORA) {
+            DecrementarBCD(entrada, LIMITE_HORAS);
+            DisplayWriteBCD(board->display, entrada, sizeof(entrada));
+        } else if (modo == AJUSTANDO_MINUTOS_ALARMA) {
+            DecrementarBCD(&entrada[2], LIMITE_MINUTOS);
+            DisplayWriteBCD(board->display, entrada, sizeof(entrada));
+        } else if (modo == AJUSTANDO_HORA_ALARMA) {
+            DecrementarBCD(entrada, LIMITE_HORAS);
+            DisplayWriteBCD(board->display, entrada, sizeof(entrada));
+        }
+    }
+}
+
+static void SetTimeProgTask(void * object) {
+    while (true) {
+        xEventGroupWaitBits(app_events, EVENT_KEY_SET_TIME_ON, true, false, portMAX_DELAY);
+
+        CambiarModo(AJUSTANDO_MINUTOS);
+        ClockGetTime(reloj, entrada, sizeof(entrada));
+        DisplayWriteBCD(board->display, entrada, sizeof(entrada));
+    }
+}
+
+static void SetAlarmProgTask(void * object) {
+    while (true) {
+        xEventGroupWaitBits(app_events, EVENT_KEY_SET_ALARM_ON, true, false, portMAX_DELAY);
+
+        CambiarModo(AJUSTANDO_MINUTOS_ALARMA);
+        ClockGetAlarm(reloj, entrada, sizeof(entrada));
+        DisplayWriteBCD(board->display, entrada, sizeof(entrada));
+    }
+}
+
 /* === Public function implementation ========================================================= */
 
 int main(void) {
-    uint8_t entrada[4];
+    // uint8_t entrada[4];
 
     reloj = ClockCreate(TICS_POR_SEC, DisparoAlarma);
     board = BoardCreate();
 
     SisTick_Init(TICS_POR_SEC);
+
+    app_events = xEventGroupCreate();
+
     CambiarModo(SIN_CONFIGURAR);
 
+    xTaskCreate(TickTask, "TickTask", 256, NULL, tskIDLE_PRIORITY + 3, NULL);
+
+    xTaskCreate(AcceptProgTask, "AcceptProgram", 256, NULL, tskIDLE_PRIORITY + 1, NULL);
+    xTaskCreate(CancelProgTask, "CancelProgram", 256, NULL, tskIDLE_PRIORITY + 1, NULL);
+    xTaskCreate(IncrementProgTask, "IncrementProgram", 256, NULL, tskIDLE_PRIORITY + 1, NULL);
+    xTaskCreate(DecrementProgTask, "DecrementProgram", 256, NULL, tskIDLE_PRIORITY + 1, NULL);
+    xTaskCreate(SetTimeProgTask, "SetTimeProgram", 256, NULL, tskIDLE_PRIORITY + 1, NULL);
+    xTaskCreate(SetAlarmProgTask, "SetAlarmProgram", 256, NULL, tskIDLE_PRIORITY + 1, NULL);
+
+    xTaskCreate(KeyTask, "KeyTask", 256, NULL, tskIDLE_PRIORITY + 1, NULL);
+
+    xTaskCreate(DisplayRefreshTask, "RefreshTask", 256, NULL, tskIDLE_PRIORITY + 2, NULL);
+
+    vTaskStartScheduler();
+
     while (true) {
-        if (DigitalInputHasActivated(board->accept)) {
-            if (!alarma_sonando) {
-                if (modo == MOSTRANDO_HORA) {
-                    AlarmActivate(reloj);
-                    DisplayTurnOnDot(board->display, 3);
-                } else if (modo == AJUSTANDO_MINUTOS) {
-                    CambiarModo(AJUSTANDO_HORA);
-                } else if (modo == AJUSTANDO_HORA) {
-                    ClockSetTime(reloj, entrada, sizeof(entrada));
-                    CambiarModo(MOSTRANDO_HORA);
-                } else if (modo == AJUSTANDO_MINUTOS_ALARMA) {
-                    CambiarModo(AJUSTANDO_HORA_ALARMA);
-                } else if (modo == AJUSTANDO_HORA_ALARMA) {
-                    ClockSetAlarm(reloj, entrada, sizeof(entrada));
-                    CambiarModo(MOSTRANDO_HORA);
-                    AlarmActivate(reloj);
-                    DisplayTurnOnDot(board->display, 3);
-                }
-            } else {
-                DigitalOutputDeactivate(board->buzzer);
-                AlarmSnooze(reloj, SNOOZE_MINUTOS);
-                alarma_sonando = false;
-            }
-        }
-
-        if (DigitalInputHasActivated(board->cancel)) {
-            if (!alarma_sonando) {
-                if (modo == MOSTRANDO_HORA) {
-                    AlarmDeactivate(reloj);
-                    DisplayTurnOffDot(board->display, 3);
-                } else if (ClockGetTime(reloj, entrada, sizeof(entrada)) &&
-                           (modo != MOSTRANDO_HORA)) {
-                    CambiarModo(MOSTRANDO_HORA);
-                } else {
-                    CambiarModo(SIN_CONFIGURAR);
-                }
-            } else {
-                DigitalOutputDeactivate(board->buzzer);
-                alarma_sonando = false;
-            }
-        }
-
-        if (ContarSegundosMientras(3, true, 1, &(board->set_time))) {
-            CambiarModo(AJUSTANDO_MINUTOS);
-            ClockGetTime(reloj, entrada, sizeof(entrada));
-            DisplayWriteBCD(board->display, entrada, sizeof(entrada));
-        }
-
-        if (ContarSegundosMientras(3, true, 1, &(board->set_alarm)) &&
-            ClockGetTime(reloj, entrada, sizeof(entrada))) {
-
-            CambiarModo(AJUSTANDO_MINUTOS_ALARMA);
-            ClockGetAlarm(reloj, entrada, sizeof(entrada));
-            DisplayWriteBCD(board->display, entrada, sizeof(entrada));
-        }
-
-        if (DigitalInputHasActivated(board->increment)) {
-            if (modo == AJUSTANDO_MINUTOS) {
-                IncrementarBCD(&entrada[2], LIMITE_MINUTOS);
-                DisplayWriteBCD(board->display, entrada, sizeof(entrada));
-            } else if (modo == AJUSTANDO_HORA) {
-                IncrementarBCD(entrada, LIMITE_HORAS);
-                DisplayWriteBCD(board->display, entrada, sizeof(entrada));
-            } else if (modo == AJUSTANDO_MINUTOS_ALARMA) {
-                IncrementarBCD(&entrada[2], LIMITE_MINUTOS);
-                DisplayWriteBCD(board->display, entrada, sizeof(entrada));
-            } else if (modo == AJUSTANDO_HORA_ALARMA) {
-                IncrementarBCD(entrada, LIMITE_HORAS);
-                DisplayWriteBCD(board->display, entrada, sizeof(entrada));
-            }
-        }
-
-        if (DigitalInputHasActivated(board->decrement)) {
-            if (modo == AJUSTANDO_MINUTOS) {
-                DecrementarBCD(&entrada[2], LIMITE_MINUTOS);
-                DisplayWriteBCD(board->display, entrada, sizeof(entrada));
-            } else if (modo == AJUSTANDO_HORA) {
-                DecrementarBCD(entrada, LIMITE_HORAS);
-                DisplayWriteBCD(board->display, entrada, sizeof(entrada));
-            } else if (modo == AJUSTANDO_MINUTOS_ALARMA) {
-                DecrementarBCD(&entrada[2], LIMITE_MINUTOS);
-                DisplayWriteBCD(board->display, entrada, sizeof(entrada));
-            } else if (modo == AJUSTANDO_HORA_ALARMA) {
-                DecrementarBCD(entrada, LIMITE_HORAS);
-                DisplayWriteBCD(board->display, entrada, sizeof(entrada));
-            }
-        }
-
-        if (ContarSegundosMientras(30, false, 6,
-                                   (digital_input_t[]){board->accept, board->cancel,
-                                                       board->set_time, board->set_alarm,
-                                                       board->increment, board->decrement})) {
-            if (modo > MOSTRANDO_HORA) {
-                if (ClockGetTime(reloj, entrada, sizeof(entrada))) {
-                    CambiarModo(MOSTRANDO_HORA);
-                } else {
-                    CambiarModo(SIN_CONFIGURAR);
-                }
-            }
-        }
-
-        for (int index = 0; index < 20; index++) {
-            for (int delay = 0; delay < 25000; delay++) {
-                __asm("NOP");
-            }
-        }
     }
-}
 
-void SysTick_Handler(void) {
-    static const int half_sec = TICS_POR_SEC / 2;
-    uint8_t hora[6];
-
-    DisplayRefresh(board->display);
-    current_tic_value = ClockTic(reloj);
-
-    if (current_tic_value == half_sec || current_tic_value == 0) {
-        if (modo <= MOSTRANDO_HORA) {
-            ClockGetTime(reloj, hora, sizeof(hora));
-            DisplayWriteBCD(board->display, hora, sizeof(hora));
-            if (modo == MOSTRANDO_HORA)
-                DisplayToggleDot(board->display, 1);
-        }
-        if ((current_tic_value == 0) && sec_count_down) {
-            sec_count_down--;
-        }
-    }
+    return 0;
 }
 
 /* === End of documentation ==================================================================== */
