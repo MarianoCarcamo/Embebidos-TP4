@@ -66,6 +66,8 @@
 #define EVENT_KEY_SET_TIME_OFF  (1 << 10)
 #define EVENT_KEY_SET_ALARM_OFF (1 << 11)
 
+#define EVENT_WAIT_30s_DONE (1 << 12)
+
 #ifndef TICS_POR_SEC
 #define TICS_POR_SEC 1000
 #endif
@@ -113,6 +115,8 @@ static void DisplayRefreshTask(void * object);
 
 static void KeyTask(void * object);
 
+static void Wait30sTask(void * object);
+
 void DisparoAlarma(clock_t reloj);
 
 void CambiarModo(modo_t valor);
@@ -120,26 +124,6 @@ void CambiarModo(modo_t valor);
 void IncrementarBCD(uint8_t numero[2], const uint8_t limite[2]);
 
 void DecrementarBCD(uint8_t numero[2], const uint8_t limite[2]);
-
-/**
- * @brief Cuentar segundos si se cumple una determinada condicion en las entradas
- *
- * Esta funcion permite contar una determinada cantidad de segundos mientras las entradas estan en
- * un estado determinado, ya sea en On u Off.
- * Esta funcion utiliza una variable global llamada "sec_count_down", una vez llegada a cero
- * (realizando el decremento en el systic) cumpliendo con las condiciones indicadas, la funcion
- * retorna un "true", caso contrario, retorna "false".
- *
- * @param segundos Cantidad de segundos
- * @param estado Estado en el que evaluar las entradas
- * @param cantidad_entradas Numero de entradas a evaluar
- * @param input Vector con entradas
- * @return true En caso de haber cumplido el tiempo en las condiciones indicadas
- * @return false En caso de no haber cumplido el tiempo en las condiciones indicadas
- */
-
-bool ContarSegundosMientras(int segundos, bool estado, int cantidad_entradas,
-                            const digital_input_t input[]);
 
 /* === Public variable definitions =============================================================
  */
@@ -155,6 +139,8 @@ static int current_tic_value;
 static int sec_count_down = 0;
 
 static bool alarma_sonando = false;
+
+static bool reset_delay = false;
 
 static uint8_t entrada[4];
 
@@ -248,33 +234,6 @@ void DecrementarBCD(uint8_t numero[2], const uint8_t limite[2]) {
     }
 }
 
-bool ContarSegundosMientras(int segundos, bool estado, int cantidad_entradas,
-                            const digital_input_t input[]) {
-    sec_count_down = segundos;
-    bool condicion = estado;
-
-    if (condicion) {
-        while (sec_count_down > 0 && condicion) {
-            for (int index = 0; index < cantidad_entradas; index++) {
-                condicion = DigitalInputGetState(input[index]);
-                if (!condicion) {
-                    return false;
-                }
-            }
-        }
-    } else {
-        while (sec_count_down > 0 && !condicion) {
-            for (int index = 0; index < cantidad_entradas; index++) {
-                condicion = DigitalInputGetState(input[index]);
-                if (condicion) {
-                    return false;
-                }
-            }
-        }
-    }
-    return true;
-}
-
 static void DisplayRefreshTask(void * object) {
     while (true) {
         DisplayRefresh(board->display);
@@ -333,16 +292,35 @@ static void KeyTask(void * object) {
 
         changes = current_state ^ last_state;
         last_state = current_state;
-        events = ((changes & !current_state << 6) | (changes & current_state));
+        events = (((changes << 6) & (!current_state << 6)) | (changes & current_state));
 
         xEventGroupSetBits(app_events, events);
+    }
+}
+
+static void Wait30sTask(void * object) {
+    uint32_t count;
+    EventBits_t events;
+
+    while (true) {
+        vTaskDelay(pdMS_TO_TICKS(1000));
+        events = xEventGroupGetBits(app_events);
+        if ((modo <= MOSTRANDO_HORA) || reset_delay) {
+            count = 0;
+            reset_delay = false;
+        } else {
+            count++;
+        }
+        if (count == 30) {
+            xEventGroupSetBits(app_events, (EVENT_WAIT_30s_DONE | events));
+        }
     }
 }
 
 static void AcceptProgTask(void * object) {
     while (true) {
         xEventGroupWaitBits(app_events, EVENT_KEY_ACCEPT_ON, true, false, portMAX_DELAY);
-
+        reset_delay = true;
         if (!alarma_sonando) {
             if (modo == MOSTRANDO_HORA) {
                 AlarmActivate(reloj);
@@ -370,7 +348,8 @@ static void AcceptProgTask(void * object) {
 
 static void CancelProgTask(void * object) {
     while (true) {
-        xEventGroupWaitBits(app_events, EVENT_KEY_CANCEL_ON, true, false, portMAX_DELAY);
+        xEventGroupWaitBits(app_events, EVENT_KEY_CANCEL_ON | EVENT_WAIT_30s_DONE, true, false,
+                            portMAX_DELAY);
 
         if (!alarma_sonando) {
             if (modo == MOSTRANDO_HORA) {
@@ -391,7 +370,7 @@ static void CancelProgTask(void * object) {
 static void IncrementProgTask(void * object) {
     while (true) {
         xEventGroupWaitBits(app_events, EVENT_KEY_INCREMENT_ON, true, false, portMAX_DELAY);
-
+        reset_delay = true;
         if (modo == AJUSTANDO_MINUTOS) {
             IncrementarBCD(&entrada[2], LIMITE_MINUTOS);
             DisplayWriteBCD(board->display, entrada, sizeof(entrada));
@@ -411,7 +390,7 @@ static void IncrementProgTask(void * object) {
 static void DecrementProgTask(void * object) {
     while (true) {
         xEventGroupWaitBits(app_events, EVENT_KEY_DECREMENT_ON, true, false, portMAX_DELAY);
-
+        reset_delay = true;
         if (modo == AJUSTANDO_MINUTOS) {
             DecrementarBCD(&entrada[2], LIMITE_MINUTOS);
             DisplayWriteBCD(board->display, entrada, sizeof(entrada));
@@ -431,20 +410,26 @@ static void DecrementProgTask(void * object) {
 static void SetTimeProgTask(void * object) {
     while (true) {
         xEventGroupWaitBits(app_events, EVENT_KEY_SET_TIME_ON, true, false, portMAX_DELAY);
-
-        CambiarModo(AJUSTANDO_MINUTOS);
-        ClockGetTime(reloj, entrada, sizeof(entrada));
-        DisplayWriteBCD(board->display, entrada, sizeof(entrada));
+        vTaskDelay(pdMS_TO_TICKS(3000));
+        reset_delay = true;
+        if (DigitalInputGetState(board->set_time)) {
+            CambiarModo(AJUSTANDO_MINUTOS);
+            ClockGetTime(reloj, entrada, sizeof(entrada));
+            DisplayWriteBCD(board->display, entrada, sizeof(entrada));
+        }
     }
 }
 
 static void SetAlarmProgTask(void * object) {
     while (true) {
         xEventGroupWaitBits(app_events, EVENT_KEY_SET_ALARM_ON, true, false, portMAX_DELAY);
-
-        CambiarModo(AJUSTANDO_MINUTOS_ALARMA);
-        ClockGetAlarm(reloj, entrada, sizeof(entrada));
-        DisplayWriteBCD(board->display, entrada, sizeof(entrada));
+        vTaskDelay(pdMS_TO_TICKS(3000));
+        reset_delay = true;
+        if (DigitalInputGetState(board->set_alarm)) {
+            CambiarModo(AJUSTANDO_MINUTOS_ALARMA);
+            ClockGetAlarm(reloj, entrada, sizeof(entrada));
+            DisplayWriteBCD(board->display, entrada, sizeof(entrada));
+        }
     }
 }
 
@@ -472,6 +457,8 @@ int main(void) {
     xTaskCreate(SetAlarmProgTask, "SetAlarmProgram", 256, NULL, tskIDLE_PRIORITY + 1, NULL);
 
     xTaskCreate(KeyTask, "KeyTask", 256, NULL, tskIDLE_PRIORITY + 1, NULL);
+
+    xTaskCreate(Wait30sTask, "Delay30sTask", 256, NULL, tskIDLE_PRIORITY + 1, NULL);
 
     xTaskCreate(DisplayRefreshTask, "RefreshTask", 256, NULL, tskIDLE_PRIORITY + 2, NULL);
 
