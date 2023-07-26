@@ -1,52 +1,11 @@
-/* Copyright 2022, Laboratorio de Microprocesadores
- * Facultad de Ciencias Exactas y Tecnología
- * Universidad Nacional de Tucuman
- * http://www.microprocesadores.unt.edu.ar/
- * Copyright 2022, Esteban Volentini <evolentini@herrera.unt.edu.ar>
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- *
- * 1. Redistributions of source code must retain the above copyright notice,
- *    this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright notice,
- *    this list of conditions and the following disclaimer in the documentation
- *    and/or other materials provided with the distribution.
- *
- * 3. Neither the name of the copyright holder nor the names of its
- *    contributors may be used to endorse or promote products derived from this
- *    software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
- */
-
-/** \brief Simple sample of use LPC HAL gpio functions
- **
- ** \addtogroup samples Sample projects
- ** \brief Sample projects to use as a starting point
- ** @{ */
-
 /* === Headers files inclusions =============================================================== */
 
-#include "bsp.h"
-#include "reloj.h"
 #include <stdbool.h>
 #include <stddef.h>
+#include "bsp.h"
+#include "reloj.h"
 #include "FreeRTOS.h"
 #include "bsp.h"
-#include "semphr.h"
 #include "task.h"
 #include "event_groups.h"
 
@@ -93,9 +52,21 @@ typedef enum {
 
 /* === Private variable declarations =========================================================== */
 
-/* === Private function declarations =========================================================== */
+static board_t board;
 
-// static void ClockTask(void * object);
+static clock_t reloj;
+
+static modo_t modo;
+
+static bool alarma_sonando = false;
+
+static bool reset_delay = false;
+
+static uint8_t entrada[4];
+
+EventGroupHandle_t app_events;
+
+/* === Private function declarations =========================================================== */
 
 static void AcceptProgTask(void * object);
 
@@ -124,27 +95,6 @@ void CambiarModo(modo_t valor);
 void IncrementarBCD(uint8_t numero[2], const uint8_t limite[2]);
 
 void DecrementarBCD(uint8_t numero[2], const uint8_t limite[2]);
-
-/* === Public variable definitions =============================================================
- */
-
-static board_t board;
-
-static clock_t reloj;
-
-static modo_t modo;
-
-static int current_tic_value;
-
-static int sec_count_down = 0;
-
-static bool alarma_sonando = false;
-
-static bool reset_delay = false;
-
-static uint8_t entrada[4];
-
-EventGroupHandle_t app_events;
 
 /* === Private variable definitions ============================================================ */
 
@@ -242,9 +192,10 @@ static void DisplayRefreshTask(void * object) {
 }
 
 static void TickTask(void * object) {
-    TickType_t last_value = xTaskGetTickCount();
+    int current_tic_value;
     static const int half_sec = TICS_POR_SEC / 2;
     uint8_t hora[6];
+    TickType_t last_value = xTaskGetTickCount();
 
     while (true) {
         current_tic_value = ClockTic(reloj);
@@ -255,9 +206,6 @@ static void TickTask(void * object) {
                 DisplayWriteBCD(board->display, hora, sizeof(hora));
                 if (modo == MOSTRANDO_HORA)
                     DisplayToggleDot(board->display, 1);
-            }
-            if ((current_tic_value == 0) && sec_count_down) {
-                sec_count_down--;
             }
         }
         vTaskDelayUntil(&last_value, pdMS_TO_TICKS(1));
@@ -436,9 +384,7 @@ static void SetAlarmProgTask(void * object) {
 /* === Public function implementation ========================================================= */
 
 int main(void) {
-    // uint8_t entrada[4];
-
-    reloj = ClockCreate(TICS_POR_SEC, DisparoAlarma);
+    reloj = ClockCreate(TICS_POR_SEC / 10, DisparoAlarma);
     board = BoardCreate();
 
     SisTick_Init(TICS_POR_SEC);
@@ -448,6 +394,8 @@ int main(void) {
     CambiarModo(SIN_CONFIGURAR);
 
     xTaskCreate(TickTask, "TickTask", 256, NULL, tskIDLE_PRIORITY + 3, NULL);
+
+    xTaskCreate(DisplayRefreshTask, "RefreshTask", 256, NULL, tskIDLE_PRIORITY + 2, NULL);
 
     xTaskCreate(AcceptProgTask, "AcceptProgram", 256, NULL, tskIDLE_PRIORITY + 1, NULL);
     xTaskCreate(CancelProgTask, "CancelProgram", 256, NULL, tskIDLE_PRIORITY + 1, NULL);
@@ -459,8 +407,6 @@ int main(void) {
     xTaskCreate(KeyTask, "KeyTask", 256, NULL, tskIDLE_PRIORITY + 1, NULL);
 
     xTaskCreate(Wait30sTask, "Delay30sTask", 256, NULL, tskIDLE_PRIORITY + 1, NULL);
-
-    xTaskCreate(DisplayRefreshTask, "RefreshTask", 256, NULL, tskIDLE_PRIORITY + 2, NULL);
 
     vTaskStartScheduler();
 
