@@ -105,8 +105,23 @@ static const uint8_t LIMITE_HORAS[] = {2, 3};
 /* === Private function implementation ========================================================= */
 
 void DisparoAlarma(clock_t reloj) {
-    DigitalOutputActivate(board->buzzer);
+    DigitalOutputActivate(board->buzzer[0]);
+    DigitalOutputActivate(board->buzzer[1]);
+    DigitalOutputActivate(board->buzzer[2]);
+    DigitalOutputActivate(board->buzzer[3]);
+    DigitalOutputActivate(board->buzzer[4]);
+    DigitalOutputActivate(board->buzzer[5]);
     alarma_sonando = true;
+}
+
+void DesactivarAlarma(clock_t reloj) {
+    DigitalOutputDeactivate(board->buzzer[0]);
+    DigitalOutputDeactivate(board->buzzer[1]);
+    DigitalOutputDeactivate(board->buzzer[2]);
+    DigitalOutputDeactivate(board->buzzer[3]);
+    DigitalOutputDeactivate(board->buzzer[4]);
+    DigitalOutputDeactivate(board->buzzer[5]);
+    alarma_sonando = false;
 }
 
 void CambiarModo(modo_t valor) {
@@ -287,9 +302,8 @@ static void AcceptProgTask(void * object) {
                 DisplayTurnOnDot(board->display, 3);
             }
         } else {
-            DigitalOutputDeactivate(board->buzzer);
+            DesactivarAlarma(reloj);
             AlarmSnooze(reloj, SNOOZE_MINUTOS);
-            alarma_sonando = false;
         }
     }
 }
@@ -309,8 +323,7 @@ static void CancelProgTask(void * object) {
                 CambiarModo(SIN_CONFIGURAR);
             }
         } else {
-            DigitalOutputDeactivate(board->buzzer);
-            alarma_sonando = false;
+            DesactivarAlarma(reloj);
         }
     }
 }
