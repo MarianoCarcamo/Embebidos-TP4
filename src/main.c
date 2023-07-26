@@ -397,7 +397,7 @@ static void SetAlarmProgTask(void * object) {
 /* === Public function implementation ========================================================= */
 
 int main(void) {
-    reloj = ClockCreate(TICS_POR_SEC / 10, DisparoAlarma);
+    reloj = ClockCreate(TICS_POR_SEC, DisparoAlarma);
     board = BoardCreate();
 
     SisTick_Init(TICS_POR_SEC);
